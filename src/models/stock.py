@@ -1,4 +1,4 @@
-from pydantic import BaseModel
-
-class Stock(BaseModel):
-    pass
+# from pydantic import BaseModel
+#
+# class Stock(BaseModel):
+#     pass
