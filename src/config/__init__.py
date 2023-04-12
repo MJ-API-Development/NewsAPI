@@ -1,5 +1,5 @@
 
-from pydantic import BaseSettings, Field
+from pydantic import BaseModel, BaseSettings, Field
 
 
 
@@ -16,12 +16,12 @@ def create_schedules() -> dict[str, dict[str, str | bool]]:
     :return:
     """
     tasks_schedules = {
-        '00:00': Task(task='scrape_news_yahoo', task_ran=False),
+        '00:00': Task(name='scrape_news_yahoo', task_ran=False),
         '03:00': Task(name='scrape_news_yahoo', task_ran=False),
         '06:00': Task(name='scrape_news_yahoo', task_ran=False),
         '09:00': Task(name='scrape_news_yahoo', task_ran=False),
         '12:00': Task(name='scrape_news_yahoo', task_ran=False),
-        '15:00': Taskdict(name='scrape_news_yahoo', task_ran=False),
+        '15:00': Task(name='scrape_news_yahoo', task_ran=False),
         '18:00': Task(name='scrape_news_yahoo', task_ran=False),
         '21:00': Task(name='scrape_news_yahoo', task_ran=False),
 
@@ -37,7 +37,7 @@ def create_schedules() -> dict[str, dict[str, str | bool]]:
     return tasks_schedules
 
 
-class SchedulerSettings(BaseSettings):
+class SchedulerSettings(BaseModel):
     """
         keys are scheduled times, values are dicts
         which include the task name and a bool to indicate the task already ran

@@ -1,9 +1,9 @@
 import datetime
-
+import asyncio
 from fastapi import FastAPI
 
 from src.config import settings
-from src.tasks.news_scraper import scrape_news_yahoo, alternate_news_sources
+from src.tasks.news_scraper import scrape_news_yahoo, alternate_news_sources, get_news
 
 description = """ News API Scrapper"""
 
@@ -41,7 +41,7 @@ async def convert_to_time(time_str: str) -> datetime.time:
     :raises ValueError: If the input time string is invalid.
     """
     try:
-        time_obj = datetime.datetime.strptime(time_str, '%H:%M:%S').time()
+        time_obj = datetime.datetime.strptime(time_str, '%H:%M').time()
     except ValueError as e:
         raise ValueError(f"Invalid time format: {e}")
     return time_obj
@@ -63,7 +63,7 @@ async def can_run_task(schedule_time: str, task_details) -> bool:
     time_diff = abs(schedule_time.hour - current_time.hour) * 60 + abs(schedule_time.minute - current_time.minute)
 
     # Check if the time difference is less than or equal to 10 minutes and the task has not already run
-    return time_diff <= 10 and not task_details.get('task_ran', True)
+    return time_diff <= 10 and not task_details.task_ran
 
 
 tickers_list = ['AAPL', 'AMZN', 'GOOGL', 'TSLA', 'FB', 'NVDA', 'NFLX', 'MSFT',
@@ -73,21 +73,21 @@ tickers_list = ['AAPL', 'AMZN', 'GOOGL', 'TSLA', 'FB', 'NVDA', 'NFLX', 'MSFT',
 async def scheduled_task():
     while True:
         # Check if it's time to run the task
-        current_time = datetime.now().strftime("%H:%M")
+        current_time = datetime.datetime.now().strftime("%H:%M")
 
-        for schedule_time, task_details in settings.schedule_times.items():
-            print(f"Running {task_details.get('name')} task at {current_time}")
-
+        for schedule_time, task_details in list(settings.schedule_times.items()):
             if await can_run_task(schedule_time=schedule_time, task_details=task_details):
                 # Run the task
-                print(f"Running {task_details.get('name')} task at {current_time}")
+                print(f"Running {task_details.name} task at {current_time}")
 
-                await tasks_lookup[task_details.get('name')](tickers_list)
-
-
+                await tasks_lookup[task_details.name](tickers_list)
+                break
 
         # Sleep for 10 minute
+        print("proceeding to wait")
+        # await get_news(tickers_list)
         await asyncio.sleep(600)
+
 
 
 @app.on_event("startup")
