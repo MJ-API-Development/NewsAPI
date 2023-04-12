@@ -7,7 +7,12 @@
 from pydantic import BaseSettings
 
 class SchedulerSettings(BaseSettings):
-    schedule_times: dict[str, str]
+    """
+        keys are scheduled times, values are dicts
+        which include the task name and a bool to indicate the task already ran
+
+    """
+    schedule_times: dict[str, dict[str, str]]
 
 
 settings = SchedulerSettings()
