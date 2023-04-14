@@ -9,6 +9,7 @@ class RssArticle(BaseModel):
     """
         **RssArticle**
             a model to parse an article feed
+            feeds must be taken from google
 
     """
     uuid: _uuid.UUID = Field(default_factory=lambda: _uuid.UUID(bytes=create_id().encode('utf-8')))
