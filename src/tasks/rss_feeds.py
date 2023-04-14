@@ -17,6 +17,6 @@ async def parse_feeds() -> list[RssArticle]:
             goes through google feeds lists and then parse the articles
     """
 
-    feeds_tasks = [parse_google_feeds(feed_link=rss) for rss in rss_lists]
+    feeds_tasks = [parse_google_feeds(rss_url=rss_url) for rss_url in rss_lists]
     feeds_list = asyncio.gather(*feeds_tasks)
     return list(itertools.chain(*feeds_list))
