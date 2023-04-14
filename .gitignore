@@ -2,4 +2,5 @@
 .env.production
 .env.local
 .idea
+.pyc
 
