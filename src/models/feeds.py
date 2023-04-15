@@ -15,7 +15,7 @@ class RssArticle(BaseModel):
     uuid: _uuid.UUID = Field(default_factory=lambda: _uuid.UUID(bytes=create_id().encode('utf-8')))
     title: str
     link: str
-    summary: str
+    summary: str | None
     published: str = Field(default=False)
     providerPublishTime: int = Field(default_factory=lambda: int(datetime.now().timestamp()))
 

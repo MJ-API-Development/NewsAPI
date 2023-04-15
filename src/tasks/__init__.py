@@ -65,12 +65,16 @@ async def parse_google_feeds(rss_url: str) -> list[RssArticle]:
     """
         **parse_google_feeds**
             will parse google rss feeds for specific subject articles
+<id>tag:google.com,2005:reader/user/00244493797674210195/state/com.google/alerts/1129709253388904655</id>
+<title>Google Alert - Financial News</title>
+<link href="https://www.google.com/alerts/feeds/00244493797674210195/1129709253388904655" rel="self"/>
+<updated>2023-04-15T12:50:23Z</updated>
 
     for entry in feed.entries:
         title = entry.title
         link = entry.link
         summary = entry.summary
-        published = entry.published
+        published = entry.updated
 
 
     :param rss_url:
@@ -79,6 +83,11 @@ async def parse_google_feeds(rss_url: str) -> list[RssArticle]:
     #  downloading Feed from source
     feed = feedparser.parse(rss_url)
     #  Creating RssArticles List
-    return [RssArticle(entry) for entry in feed.entries]
+    articles_list = []
+    for entry in feed.entries:
+        article_entry = dict(title=entry.title, link=entry.link, published=entry.updated)
+        articles_list.append(RssArticle(**article_entry))
+
+    return articles_list
 
 

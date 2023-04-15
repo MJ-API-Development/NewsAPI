@@ -6,7 +6,7 @@ from src.models import RssArticle
 from src.tasks import parse_google_feeds
 
 rss_lists = [
-    'https://www.google.com/alerts/feeds/1234567890abcdefghijklmno'
+    'https://www.google.com/alerts/feeds/00244493797674210195/1129709253388904655'
 ]
 
 
