@@ -1,6 +1,7 @@
 
 
 """
+Helper functions to obtain ticker symbols
     utils for searching through articles
 
 """
@@ -40,7 +41,8 @@ async def get_exchange_tickers(exchange_code: str) -> list[Stock]:
 
 async def get_exchange_lists() -> list[Exchange]:
     """
-
+        **get_exchange_lists**
+            returns a list of exchanges from the Main API
     :return:
     """
     url: str = f'https://gateway.eod-stock-api.site/api/v1/exchanges'
