@@ -25,7 +25,10 @@ To get started with the Financial News API, follow these steps:
 
 ## Usage
 
-To use the Financial News API, send a GET request to the API endpoint with your API key and the ticker symbol of the financial instrument you are interested in. The API will return a list of news articles related to that instrument.
+To use the Financial News API, send a GET request to the API endpoint with your API key and the 
+ticker symbol of the financial instrument you are interested in. 
+
+The API will return a list of news articles related to that instrument.
 
     https://gateway.eod-stock-api.site/api/v1/news/articles-by-ticker/{stock_code}
 
@@ -44,7 +47,7 @@ The response will be a JSON object containing a list of news articles in the fol
 
 ## Support
 
-If you have any questions or issues, please contact us at support@example.com.
+If you have any questions or issues, please contact us at [support@eod-stock-api.site](mailto:support@eod-stock-api.site) .
 
 ## License
 
