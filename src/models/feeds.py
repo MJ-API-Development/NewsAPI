@@ -18,6 +18,7 @@ class RssArticle(BaseModel):
     link: str
     summary: str | None
     body: str | None
+    thumbnail: list[dict[str, str | int]] | None
     published: str = Field(default=False)
     providerPublishTime: int = Field(default_factory=lambda: int(datetime.now().timestamp()))
 

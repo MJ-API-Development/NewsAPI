@@ -1,6 +1,7 @@
 import pprint
 
 import pandas as pd
+from bs4 import BeautifulSoup
 import requests
 import yfinance as yf
 
@@ -51,31 +52,28 @@ async def alternate_news_sources() -> list[dict[str, list[dict[str, str]]]]:
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
     articles_list: list[RssArticle] = await parse_feeds()
     for i, article in enumerate(articles_list):
-        body_html = await download_article(link=article.link, timeout=60, headers=headers)
-        summary, parsed_article = await do_soup(html=body_html)
-        article.body = parsed_article
+        summary, body, images = await parse_article(article)
+        article.body = body
         article.summary = summary
+        article.thumbnail = images.get('thumbnail')
         articles_list[i] = article
     return articles_list
 
 
-async def get_news(tickers: list[str]) -> list[NewsArticle]:
+async def parse_article(article: RssArticle) -> tuple[str, str, dict[str, str | int]]:
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
     }
-    news = []
-    for ticker in tickers:
+    html = await download_article(link=article.link, headers=headers, timeout=60)
+    soup = BeautifulSoup(html, 'html.parser')
+    summary = soup.find('p').get_text()
+    body = ''
+    images = []
+    for elem in soup.select('div.article-content > *'):
+        if elem.name == 'p':
+            body += elem.get_text()
+        elif elem.name == 'img':
+            images.append(dict(src=elem['src'], alt=elem['alt'], width=elem['width'], height=elem['height']))
+    return summary,  body, images
 
-        url = f"https://finance.yahoo.com/_finance_doubledown/api/resource/searchassist;searchTerm={ticker}"
-        with requests.Session() as session:
-            response = session.get(url=url, headers=headers)
-            if response.status_code != 200:
-                pprint.pprint(response.text)
-                json_data = response.json()
-                for article in json_data['stream']['items']:
-                    news_article = NewsArticle(**article)
-                    news.append(news_article)
-                    pprint.pprint(news_article)
-
-    return news
 
