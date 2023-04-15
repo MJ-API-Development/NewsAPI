@@ -76,6 +76,7 @@ async def get_news(tickers: list[str]) -> list[NewsArticle]:
     }
     news = []
     for ticker in tickers:
+
         url = f"https://finance.yahoo.com/_finance_doubledown/api/resource/searchassist;searchTerm={ticker}"
         with requests.Session() as session:
             response = session.get(url=url, headers=headers)
@@ -88,3 +89,4 @@ async def get_news(tickers: list[str]) -> list[NewsArticle]:
                     pprint.pprint(news_article)
 
     return news
+

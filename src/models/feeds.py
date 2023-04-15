@@ -1,10 +1,11 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 import uuid as _uuid
 from datetime import datetime
 
 from src.utils import create_id
 
 
+# noinspection PyMethodParameters
 class RssArticle(BaseModel):
     """
         **RssArticle**
@@ -21,3 +22,22 @@ class RssArticle(BaseModel):
 
     class Config:
         title = "Google RSS Article Model"
+
+    @validator('published')
+    def published_validator(cls, v):
+        """
+
+        :param v:
+        :return:
+        """
+        return v if v else int(datetime.now().timestamp())
+
+    @validator('link')
+    def link_validator(cls, v):
+        """
+            ensure that the link is a valid url
+
+        :param v:
+        :return:
+        """
+        return v if v.startswith('https') else 'https://' + v
