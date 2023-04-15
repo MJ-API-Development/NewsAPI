@@ -1,14 +1,10 @@
-import pprint
-
 import pandas as pd
-from bs4 import BeautifulSoup
-import requests
 import yfinance as yf
+from bs4 import BeautifulSoup
 
 from models import RssArticle
 from rss_feeds import parse_feeds
-from src.models import NewsArticle
-from src.tasks import download_article, do_soup
+from src.tasks import download_article
 
 
 async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[dict[str, str]]]]:
