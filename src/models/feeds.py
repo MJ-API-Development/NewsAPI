@@ -17,6 +17,7 @@ class RssArticle(BaseModel):
     title: str
     link: str
     summary: str | None
+    body: str | None
     published: str = Field(default=False)
     providerPublishTime: int = Field(default_factory=lambda: int(datetime.now().timestamp()))
 

@@ -1,7 +1,7 @@
 
 from datetime import datetime
 import uuid
-from pydantic import BaseModel, validator,Field
+from pydantic import BaseModel, validator, Field
 
 
 # noinspection PyMethodParameters

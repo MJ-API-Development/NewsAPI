@@ -4,7 +4,10 @@ import pandas as pd
 import requests
 import yfinance as yf
 
+from models import RssArticle
+from rss_feeds import parse_feeds
 from src.models import NewsArticle
+from src.tasks import download_article, do_soup
 
 
 async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[dict[str, str]]]]:
@@ -39,35 +42,21 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[dict[str,
     return news
 
 
-def alternate_news_sources(tickers: list[str]) -> list[dict[str, list[dict[str, str]]]]:
+async def alternate_news_sources() -> list[dict[str, list[dict[str, str]]]]:
     """
         **alternate_news_sources**
             search for news from alternate sources
-    :param tickers:
     :return:
     """
-    news = []
-
-    for ticker in tickers:
-        ticker = yf.Ticker(ticker)
-        news_df = pd.DataFrame(ticker.news)
-        articles = []
-        for i in range(len(news_df)):
-            article = news_df.iloc[i]
-            articles.append(dict(
-                uuid=article.get('uuid'),
-                title=article.get('title'),
-                publisher=article.get('publisher'),
-                link=article.get('link'),
-                providerPublishTime=article.get('providerPublishTime'),
-                type=article.get('type'),
-                thumbnail=article.get('thumbnail'),
-                relatedTickers=article.get('relatedTickers')
-            ))
-
-        news.append({ticker: articles})
-
-    return news
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
+    articles_list: list[RssArticle] = await parse_feeds()
+    for i, article in enumerate(articles_list):
+        body_html = await download_article(link=article.link, timeout=60, headers=headers)
+        summary, parsed_article = await do_soup(html=body_html)
+        article.body = parsed_article
+        article.summary = summary
+        articles_list[i] = article
+    return articles_list
 
 
 async def get_news(tickers: list[str]) -> list[NewsArticle]:

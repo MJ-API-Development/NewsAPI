@@ -1,16 +1,17 @@
-
-
 """
 Helper functions to obtain ticker symbols
     utils for searching through articles
 
 """
+import asyncio
 import requests
 import feedparser
+import aiohttp
 
 from models import Exchange, Stock
 from src.models import Stock, RssArticle
 from src.config import confing_instance
+from bs4 import BeautifulSoup
 
 
 async def get_exchange_tickers(exchange_code: str) -> list[Stock]:
@@ -91,3 +92,27 @@ async def parse_google_feeds(rss_url: str) -> list[RssArticle]:
     return articles_list
 
 
+async def do_soup(html) -> tuple[str, str]:
+    """
+        parse the whole document and return formatted text
+    :param html:
+    :return:
+    """
+    soup = BeautifulSoup(html, 'html.parser')
+    paragraphs = soup.find_all('p')
+    return paragraphs[0], '\n\n'.join([p.get_text() for p in paragraphs])
+
+
+async def download_article(link: str, timeout: int, headers: dict[str, str]) -> tuple[str, str] | tuple[None, str]:
+    """
+    Download the article from the link stored in news_sentiment.link,
+    then store the results in news_sentiment.article
+    """
+    try:
+        async with aiohttp.ClientSession(headers=headers) as session:
+            async with session.get(link, timeout=timeout) as response:
+                response.raise_for_status()
+                text: str = await response.text()
+                return text
+    except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+        return None
