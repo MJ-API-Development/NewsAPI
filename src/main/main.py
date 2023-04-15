@@ -4,7 +4,7 @@ import asyncio
 from fastapi import FastAPI
 
 from src.config import settings
-from src.tasks.news_scraper import scrape_news_yahoo, alternate_news_sources, get_news
+from src.tasks.news_scraper import scrape_news_yahoo, alternate_news_sources
 
 description = """ News API Scrapper"""
 
