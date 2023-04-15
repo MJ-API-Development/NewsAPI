@@ -23,8 +23,6 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[dict[str,
         articles = []
         for i in range(len(news_df)):
             article = news_df.iloc[i]
-            article_url = article['link']
-            print(article)
             articles.append(dict(
                 uuid=article.get('uuid'),
                 title=article.get('title'),
@@ -56,8 +54,6 @@ def alternate_news_sources(tickers: list[str]) -> list[dict[str, list[dict[str, 
         articles = []
         for i in range(len(news_df)):
             article = news_df.iloc[i]
-            article_url = article['link']
-            print(article)
             articles.append(dict(
                 uuid=article.get('uuid'),
                 title=article.get('title'),
