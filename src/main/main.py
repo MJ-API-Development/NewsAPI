@@ -84,8 +84,6 @@ async def scheduled_task():
                 break
 
         # Sleep for 10 minute
-        print("proceeding to wait")
-        # await get_news(tickers_list)
         await asyncio.sleep(600)
 
 
