@@ -45,22 +45,33 @@ async def alternate_news_sources() -> list[dict[str, list[dict[str, str]]]]:
             search for news from alternate sources
     :return:
     """
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
     articles_list: list[RssArticle] = await parse_feeds()
     for i, article in enumerate(articles_list):
+
         summary, body, images = await parse_article(article)
+        # NOTE - probably nothing to lose sleep over, but if an article does not
+        # have images it won't be saved
+        if not all([summary, body, images]):
+            continue
+
         article.body = body
         article.summary = summary
-        article.thumbnail = images.get('thumbnail')
+        article.thumbnail = images
+
         articles_list[i] = article
+
     return articles_list
 
 
-async def parse_article(article: RssArticle) -> tuple[str, str, dict[str, str | int]]:
+async def parse_article(article: RssArticle) -> tuple[str, str, list[dict[str, str | int]]]:
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
     }
+
     html = await download_article(link=article.link, headers=headers, timeout=60)
+    if html is None:
+        return None, None, None
+
     soup = BeautifulSoup(html, 'html.parser')
     summary = soup.find('p').get_text()
     body = ''
@@ -71,5 +82,3 @@ async def parse_article(article: RssArticle) -> tuple[str, str, dict[str, str | 
         elif elem.name == 'img':
             images.append(dict(src=elem['src'], alt=elem['alt'], width=elem['width'], height=elem['height']))
     return summary,  body, images
-
-
