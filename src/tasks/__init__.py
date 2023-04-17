@@ -9,7 +9,7 @@ import feedparser
 import aiohttp
 from requests_cache import CachedSession
 
-from models import Exchange, Stock
+from src.models import Exchange, Stock
 from src.models import Stock, RssArticle
 from src.config import confing_instance
 from bs4 import BeautifulSoup
@@ -166,3 +166,22 @@ async def can_run_task(schedule_time: str, task_details) -> bool:
 
     # Check if the time difference is less than or equal to 10 minutes and the task has not already run
     return time_diff <= 10 and not task_details.task_ran
+
+
+async def get_meme_tickers() -> dict[str, str]:
+    """
+    Returns a dictionary of ticker symbols and company names for Mexican stocks.
+    :return: A dictionary of ticker symbols and company names for Mexican stocks.
+    """
+    url = "https://finance.yahoo.com/most-active?count=100&offset=0"
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, "html.parser")
+    tickers = {}
+
+    for row in soup.find_all("tbody")[0].find_all("tr"):
+        cells = row.find_all("td")
+        symbol = cells[0].text.strip()
+        name = cells[1].text.strip()
+        tickers[symbol] = name
+
+    return tickers

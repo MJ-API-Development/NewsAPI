@@ -1,8 +1,7 @@
-from pydantic import BaseModel, Field, validator
 import uuid as _uuid
 from datetime import datetime
 
-from src.utils import create_id
+from pydantic import BaseModel, Field, validator
 
 
 # noinspection PyMethodParameters
@@ -10,7 +9,7 @@ class RssArticle(BaseModel):
     """
         **RssArticle**
             a model to parse an article feed
-            feeds must be taken from google
+            Feeds must be taken from Google.
 
     """
     uuid: _uuid.UUID = Field(default_factory=lambda: _uuid.uuid4())

@@ -5,7 +5,7 @@ from fastapi import FastAPI
 
 from src.config import settings
 from src.tasks.news_scraper import scrape_news_yahoo, alternate_news_sources
-from src.tasks import can_run_task
+from src.tasks import can_run_task, get_meme_tickers
 
 description = """ News API Scrapper"""
 
@@ -33,9 +33,6 @@ tasks_lookup = {
     'alternate_news_sources': alternate_news_sources,
 }
 
-tickers_list = ['AAPL', 'AMZN', 'GOOGL', 'TSLA', 'FB', 'NVDA', 'NFLX', 'MSFT', 'JPM', 'V', 'BAC', 'WMT', 'JNJ', 'PG',
-                'KO', 'PEP', 'CSCO', 'INTC', 'ORCL', 'AMD']
-
 
 async def scheduled_task():
     """
@@ -43,10 +40,13 @@ async def scheduled_task():
 
     :return:
     """
+    meme_tickers = await get_meme_tickers()
+    can_refresh_count = 0
     while True:
         # Check if it's time to run the task
         current_time = datetime.datetime.now().strftime("%H:%M")
-
+        tickers_list: list[str] = list(set([ticker for ticker in meme_tickers.keys()]))
+        can_refresh_count += 1
         for schedule_time, task_details in list(settings.schedule_times.items()):
             if await can_run_task(schedule_time=schedule_time, task_details=task_details):
                 # Run the task
@@ -57,6 +57,10 @@ async def scheduled_task():
 
         # Sleep for 10 minute
         await asyncio.sleep(600)
+        if can_refresh_count == 6:
+            # will refresh meme tickers every hour
+            meme_tickers = await get_meme_tickers()
+            can_refresh_count = 0
 
 
 @app.on_event("startup")

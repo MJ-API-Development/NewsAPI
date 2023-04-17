@@ -2,8 +2,8 @@ import pandas as pd
 import yfinance as yf
 from bs4 import BeautifulSoup
 
-from models import RssArticle
-from rss_feeds import parse_feeds
+from src.models import RssArticle
+from src.tasks.rss_feeds import parse_feeds
 from src.tasks import download_article, request_session
 
 
