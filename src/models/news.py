@@ -30,6 +30,7 @@ class NewsArticle(BaseModel):
     @validator('link')
     def check_link(cls, v):
         """
+        **check_link**
             ensure that the link is a valid url
         :param v:
         :return:
@@ -41,6 +42,7 @@ class NewsArticle(BaseModel):
     @validator('uuid')
     def check_uuid(cls, v):
         """
+        **check_uuid**
             ensure that the uuid is a valid uuid
         :param v:
         :return:
