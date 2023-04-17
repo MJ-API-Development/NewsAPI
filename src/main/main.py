@@ -38,6 +38,11 @@ tickers_list = ['AAPL', 'AMZN', 'GOOGL', 'TSLA', 'FB', 'NVDA', 'NFLX', 'MSFT', '
 
 
 async def scheduled_task():
+    """
+    **scheduled_task**
+
+    :return:
+    """
     while True:
         # Check if it's time to run the task
         current_time = datetime.datetime.now().strftime("%H:%M")

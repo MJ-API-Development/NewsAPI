@@ -28,7 +28,8 @@ class RssArticle(BaseModel):
     @validator('published')
     def published_validator(cls, v):
         """
-
+        **published_validator**
+            published validator
         :param v:
         :return:
         """
@@ -37,8 +38,8 @@ class RssArticle(BaseModel):
     @validator('link')
     def link_validator(cls, v):
         """
+        **link_validator**
             ensure that the link is a valid url
-
         :param v:
         :return:
         """
