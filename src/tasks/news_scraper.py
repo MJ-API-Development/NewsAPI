@@ -1,4 +1,5 @@
 import pandas as pd
+import pprint
 import yfinance as yf
 from bs4 import BeautifulSoup
 
@@ -24,6 +25,9 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[dict[str,
         articles = []
         for i in range(len(news_df)):
             article = news_df.iloc[i]
+
+            summary, body, images = await parse_article(article.get('link'))
+
             articles.append(dict(
                 uuid=article.get('uuid'),
                 title=article.get('title'),
@@ -32,9 +36,11 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[dict[str,
                 providerPublishTime=article.get('providerPublishTime'),
                 type=article.get('type'),
                 thumbnail=article.get('thumbnail'),
-                relatedTickers=article.get('relatedTickers')
+                relatedTickers=article.get('relatedTickers'),
+                summary=summary,
+                body=body
             ))
-
+            pprint.pprint(articles[i])
         news.append({ticker: articles})
 
     return news

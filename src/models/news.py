@@ -19,6 +19,8 @@ class NewsArticle(BaseModel):
     type: str
     thumbnail: str
     relatedTickers: list[str] = Field(default_factory=list())
+    summary: str | None
+    body: str | None
 
     @property
     def publish_time(self) -> datetime:
