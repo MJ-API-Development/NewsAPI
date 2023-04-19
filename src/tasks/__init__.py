@@ -174,7 +174,11 @@ async def get_meme_tickers() -> dict[str, str]:
     :return: A dictionary of ticker symbols and company names for Mexican stocks.
     """
     url = "https://finance.yahoo.com/most-active?count=100&offset=0"
-    response = requests.get(url)
+    try:
+        response = requests.get(url)
+    except requests.exceptions.ConnectionError:
+        return dict()
+
     soup = BeautifulSoup(response.content, "html.parser")
     tickers = {}
 

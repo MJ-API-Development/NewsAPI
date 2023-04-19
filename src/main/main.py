@@ -3,14 +3,16 @@ import asyncio
 
 from fastapi import FastAPI
 
+from src.api_routes.articles import articles_router
 from src.config import settings
 from src.tasks.news_scraper import scrape_news_yahoo, alternate_news_sources
 from src.tasks import can_run_task, get_meme_tickers
+from src.connector.data_connector import DataConnector
 
 description = """ News API Scrapper"""
 
 app = FastAPI(
-    title="Financial News API",
+    title="Financial News API - Article Scrapper Micro Service",
     description=description,
     version="1.0.0",
     terms_of_service="https://eod-stock-api.site/terms",
@@ -36,12 +38,12 @@ tasks_lookup = {
 
 async def scheduled_task():
     """
-    **scheduled_task**
-
+        **scheduled_task**
     :return:
     """
     meme_tickers = await get_meme_tickers()
     can_refresh_count = 0
+    data_sink: DataConnector = DataConnector()
     while True:
         # Check if it's time to run the task
         current_time = datetime.datetime.now().strftime("%H:%M")
@@ -52,8 +54,9 @@ async def scheduled_task():
                 # Run the task
                 print(f"Running {task_details.name} task at {current_time}")
 
-                await tasks_lookup[task_details.name](tickers_list)
-                break
+                articles = await tasks_lookup[task_details.name](tickers_list)
+                # this will store the article to whatever storage data_sink is storing in
+                asyncio.create_task(data_sink.incoming_articles(article_list=articles))
 
         # Sleep for 10 minute
         await asyncio.sleep(600)
@@ -66,3 +69,5 @@ async def scheduled_task():
 @app.on_event("startup")
 async def startup_event():
     asyncio.create_task(scheduled_task())
+
+app.include_router(articles_router)
