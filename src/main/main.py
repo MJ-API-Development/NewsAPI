@@ -73,5 +73,6 @@ async def startup_event():
     asyncio.create_task(scheduled_task())
     asyncio.create_task(data_sink.mem_store_to_storage())
 
-
-app.include_router(articles_router)
+# TODO ADD Some Management API to router so the service worker can be controlled and its activity monitored from
+#  the admin system
+# app.include_router(articles_router)
