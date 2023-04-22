@@ -37,6 +37,7 @@ tasks_lookup = {
 
 data_sink: DataConnector = DataConnector()
 
+
 async def scheduled_task():
     """
         **scheduled_task**
@@ -71,5 +72,6 @@ async def scheduled_task():
 async def startup_event():
     asyncio.create_task(scheduled_task())
     asyncio.create_task(data_sink.mem_store_to_storage())
+
 
 app.include_router(articles_router)
