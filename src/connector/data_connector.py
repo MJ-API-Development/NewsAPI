@@ -16,7 +16,6 @@ class DataConnector:
 
     # noinspection PyUnusedLocal
     def __init__(self, *args, **kwargs):
-        self.database_connector = None
         self.lock: asyncio.Lock = asyncio.Lock()
         self.database_buffer: list[NewsArticle] | None = None
         self._buffer_max_size: int = 100
