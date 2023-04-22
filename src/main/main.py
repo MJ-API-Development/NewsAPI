@@ -3,7 +3,8 @@ import asyncio
 
 from fastapi import FastAPI
 
-from src.api_routes.articles import articles_router
+from src.api_routes.admin import admin_router
+from src.api_routes.telemetry import telemetry_router
 from src.config import scheduler_settings
 from src.tasks.news_scraper import scrape_news_yahoo, alternate_news_sources
 from src.tasks import can_run_task, get_meme_tickers
@@ -75,4 +76,7 @@ async def startup_event():
 
 # TODO ADD Some Management API to router so the service worker can be controlled and its activity monitored from
 #  the admin system
-# app.include_router(articles_router)
+
+app.include_router(admin_router)
+app.include_router(telemetry_router)
+
