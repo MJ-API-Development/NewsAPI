@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from pydantic import BaseModel, BaseSettings, Field
 
 
@@ -34,6 +36,15 @@ def create_schedules() -> dict[str, dict[str, str | bool]]:
     return tasks_schedules
 
 
+class DatabaseSettings(BaseSettings):
+    SQL_DB_URL: str = Field(..., env='SQL_DB_URL')
+    TOTAL_CONNECTIONS: int = Field(default=1000)
+
+    class Config:
+        env_file = '.env.development'
+        env_file_encoding = 'utf-8'
+
+
 class SchedulerSettings(BaseModel):
     """
         keys are scheduled times, values are dicts
@@ -43,15 +54,30 @@ class SchedulerSettings(BaseModel):
     schedule_times: dict[str, Task] = Field(default_factory=lambda: create_schedules())
 
 
-class ConfigInstance(BaseSettings):
-    EOD_STOCK_API_KEY: str = Field(..., env='EOD_STOCK_API_KEY')
+class Logging(BaseSettings):
+    filename: str = Field(default="financial_news.logs")
 
     class Config:
-        """configuration file for admin settings"""
         env_file = '.env.development'
         env_file_encoding = 'utf-8'
 
 
-settings = SchedulerSettings()
+class ConfigInstance(BaseSettings):
+    APP_NAME: str = Field(default="Financial-News-Parser")
+    EOD_STOCK_API_KEY: str = Field(..., env='EOD_STOCK_API_KEY')
+    DEVELOPMENT_SERVER_NAME: str = Field(..., env='DEVELOPMENT')
+    DATABASE_SETTINGS: DatabaseSettings = DatabaseSettings()
+    LOGGING: Logging = Logging()
 
-confing_instance = ConfigInstance()
+    class Config:
+        """configuration file for admin scheduler_settings"""
+        env_file = '.env.development'
+        env_file_encoding = 'utf-8'
+
+
+scheduler_settings = SchedulerSettings()
+
+
+@lru_cache(maxsize=1, typed=True)
+def config_instance() -> ConfigInstance:
+    return ConfigInstance()

@@ -25,11 +25,13 @@ class DataConnector:
 
     async def incoming_articles(self, article_list: list[NewsArticle]):
         """
+        **incoming_articles**
 
-        :param article_list:
-        :return:
+            :param article_list:
+            :return:
         """
         await asyncio.gather(*[self.incoming_article(article=article) for article in article_list if article])
+        return
 
     async def mem_store_to_storage(self):
         """
@@ -39,3 +41,8 @@ class DataConnector:
         while True:
             if self.mem_storage.qsize() < self._buffer_max_size:
                 self.database_buffer.append(await self.mem_storage.get())
+            else:
+                # TODO Save database_buffer to database
+                self.database_buffer = []
+
+

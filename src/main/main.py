@@ -4,7 +4,7 @@ import asyncio
 from fastapi import FastAPI
 
 from src.api_routes.articles import articles_router
-from src.config import settings
+from src.config import scheduler_settings
 from src.tasks.news_scraper import scrape_news_yahoo, alternate_news_sources
 from src.tasks import can_run_task, get_meme_tickers
 from src.connector.data_connector import DataConnector
@@ -47,9 +47,9 @@ async def scheduled_task():
     while True:
         # Check if it's time to run the task
         current_time = datetime.datetime.now().strftime("%H:%M")
-        tickers_list: list[str] = list(set([ticker for ticker in meme_tickers.keys()]))
+        tickers_list: list[str] = list({ticker for ticker in meme_tickers.keys()})
         can_refresh_count += 1
-        for schedule_time, task_details in list(settings.schedule_times.items()):
+        for schedule_time, task_details in list(scheduler_settings.schedule_times.items()):
             if await can_run_task(schedule_time=schedule_time, task_details=task_details):
                 # Run the task
                 print(f"Running {task_details.name} task at {current_time}")

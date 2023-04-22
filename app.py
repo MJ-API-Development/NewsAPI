@@ -4,6 +4,7 @@
 """
 
 import uvicorn
+# noinspection PyUnresolvedReferences
 from src.main.main import app
 
 

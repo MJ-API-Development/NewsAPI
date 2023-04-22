@@ -15,3 +15,8 @@ def create_id(size: int = 16, chars: str = _char_set) -> str:
     """
     # return ''.join(random.choice(chars) for _ in range(size))
     return ''.join(random.choices(chars, k=size))
+
+def camel_to_snake(name: str) -> str:
+    import re
+    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()

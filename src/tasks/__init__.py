@@ -11,7 +11,7 @@ from requests_cache import CachedSession
 
 from src.models import Exchange, Stock
 from src.models import Stock, RssArticle
-from src.config import confing_instance
+from src.config import config_instance
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 
@@ -41,7 +41,7 @@ async def get_exchange_tickers(exchange_code: str) -> list[Stock]:
     :return:
     """
     url: str = f'https://gateway.eod-stock-api.site/api/v1/stocks/exchange/code/{exchange_code}'
-    params: dict = dict(api_key=confing_instance.EOD_STOCK_API_KEY)
+    params: dict = dict(api_key=config_instance.EOD_STOCK_API_KEY)
 
     response: requests.Response = request_session.get(url=url, params=params)
     response.raise_for_status()
@@ -63,7 +63,7 @@ async def get_exchange_lists() -> list[Exchange]:
     :return:
     """
     url: str = f'https://gateway.eod-stock-api.site/api/v1/exchanges'
-    params: dict = dict(api_key=confing_instance.EOD_STOCK_API_KEY)
+    params: dict = dict(api_key=config_instance.EOD_STOCK_API_KEY)
 
     response: requests.Response = request_session.get(url=url, params=params)
     response.raise_for_status()
