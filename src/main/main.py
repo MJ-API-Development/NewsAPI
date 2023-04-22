@@ -9,7 +9,7 @@ from src.tasks.news_scraper import scrape_news_yahoo, alternate_news_sources
 from src.tasks import can_run_task, get_meme_tickers
 from src.connector.data_connector import DataConnector
 
-description = """ News API Scrapper"""
+description = """Financial News API Scrapper"""
 
 app = FastAPI(
     title="Financial News API - Article Scrapper Micro Service",
@@ -17,7 +17,7 @@ app = FastAPI(
     version="1.0.0",
     terms_of_service="https://eod-stock-api.site/terms",
     contact={
-        "name": "Financial News API",
+        "name": "MJ API Development",
         "url": "https://eod-stock-api.site/contact",
         "email": "info@eod-stock-api.site"
     },

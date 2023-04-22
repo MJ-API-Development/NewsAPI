@@ -12,6 +12,7 @@ class DataConnector:
         TODO - Feature Version must use Redis as a Message broker to store & send articles.
     """
 
+    # noinspection PyUnusedLocal
     def __init__(self, *args, **kwargs):
         self.database_connector = None
         self.lock: asyncio.Lock = asyncio.Lock()
