@@ -1,4 +1,3 @@
-
 from datetime import datetime
 import uuid
 from pydantic import BaseModel, validator, Field
@@ -8,7 +7,6 @@ from pydantic import BaseModel, validator, Field
 class NewsArticle(BaseModel):
     """
     **NewsArticle**
-
         Used to parse YFinance Articles
     """
     uuid: uuid.UUID
@@ -52,4 +50,3 @@ class NewsArticle(BaseModel):
         if not isinstance(v, uuid.UUID):
             raise ValueError('UUID must be a valid UUID')
         return v
-

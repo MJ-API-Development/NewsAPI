@@ -28,8 +28,7 @@ request_session = CachedSession('finance_news.cache', use_cache_dir=True,
                                 # Don't match this request param, and redact if from the cache
                                 match_headers=['Accept-Language'],
                                 # Cache a different response per language
-                                stale_if_error=True,
-                                # In case of request errors, use stale cache data if possible
+                                stale_if_error=True # In case of request errors, use stale cache data if possible
                                 )
 
 
@@ -101,6 +100,7 @@ async def parse_google_feeds(rss_url: str) -> list[RssArticle]:
     #  Creating RssArticles List
     articles_list = []
     for entry in feed.entries:
+        # TODO parse the article in such a way to find all the missing data
         article_entry = dict(title=entry.title, link=entry.link, published=entry.updated)
         articles_list.append(RssArticle(**article_entry))
 

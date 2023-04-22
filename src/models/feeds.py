@@ -1,6 +1,5 @@
 import uuid as _uuid
 from datetime import datetime
-
 from pydantic import BaseModel, Field, validator
 
 
@@ -14,6 +13,7 @@ class RssArticle(BaseModel):
     """
     uuid: _uuid.UUID = Field(default_factory=lambda: _uuid.uuid4())
     title: str
+    publisher: str
     link: str
     summary: str | None
     body: str | None

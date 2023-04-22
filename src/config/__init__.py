@@ -62,12 +62,24 @@ class Logging(BaseSettings):
         env_file_encoding = 'utf-8'
 
 
+class MServiceHeaders(BaseSettings):
+    X_API_KEY: str = Field(..., env='X_API_KEY')
+    X_SECRET_TOKEN: str = Field(..., env='X_SECRET_TOKEN')
+    X_RAPID_KEY: str = Field(..., env='X_RAPID_KEY')
+
+    class Config:
+        env_file = '.env.development'
+        env_file_encoding = 'utf-8'
+
+
 class ConfigInstance(BaseSettings):
     APP_NAME: str = Field(default="Financial-News-Parser")
     EOD_STOCK_API_KEY: str = Field(..., env='EOD_STOCK_API_KEY')
     DEVELOPMENT_SERVER_NAME: str = Field(..., env='DEVELOPMENT')
     DATABASE_SETTINGS: DatabaseSettings = DatabaseSettings()
+    SERVICE_HEADERS: MServiceHeaders = MServiceHeaders()
     LOGGING: Logging = Logging()
+    CRON_ENDPOINT: str = Field(default="https://cron.eod-stock-api.site")
 
     class Config:
         """configuration file for admin scheduler_settings"""
