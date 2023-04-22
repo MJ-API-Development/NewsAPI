@@ -1,7 +1,6 @@
 """
 Helper functions to obtain ticker symbols
     utils for searching through articles
-
 """
 import asyncio
 import requests
@@ -28,7 +27,7 @@ request_session = CachedSession('finance_news.cache', use_cache_dir=True,
                                 # Don't match this request param, and redact if from the cache
                                 match_headers=['Accept-Language'],
                                 # Cache a different response per language
-                                stale_if_error=True # In case of request errors, use stale cache data if possible
+                                stale_if_error=True  # In case of request errors, use stale cache data if possible
                                 )
 
 
@@ -90,7 +89,6 @@ async def parse_google_feeds(rss_url: str) -> list[RssArticle]:
         link = entry.link
         summary = entry.summary
         published = entry.updated
-
 
     :param rss_url:
     :return: 
@@ -173,7 +171,8 @@ async def get_meme_tickers(count: int = 100, offset: int = 0) -> dict[str, str]:
     :return: A dictionary of ticker symbols and company names for Mexican stocks.
     """
     url = f"https://finance.yahoo.com/most-active?count={count}&offset={offset}"
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (HTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (HTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
     try:
         request_session.headers = headers
         response = request_session.get(url)
