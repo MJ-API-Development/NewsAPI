@@ -8,6 +8,8 @@ class DataConnector:
     """
         The Data Connector Keeps the articles in memory after reaching a certain thresh hold the articles
         are sent to the backend via CRON API.
+
+        TODO - Feature Version must use Redis as a Message broker to store articles.
     """
 
     def __init__(self, *args, **kwargs):
@@ -16,7 +18,7 @@ class DataConnector:
         self.database_buffer: list[NewsArticle] | None = None
         self._buffer_max_size: int = 100
         self.create_article_endpoint: str = f'{config_instance().CRON_ENDPOINT}/api/v1/news/article'
-        pass
+        self.aio_session = aiohttp.ClientSession(headers=create_auth_headers())
 
     async def incoming_article(self, article: NewsArticle):
         """
@@ -53,18 +55,21 @@ class DataConnector:
 
                 self.database_buffer = []
 
+            await asyncio.sleep(delay=60)
+
     async def send_article_to_cron(self, article: NewsArticle):
         """
             **send_article_to_cron**
+                send articles via http to cron jobs server
         :param article:
         :return:
         """
-        headers = await create_auth_headers()
-        async with aiohttp.ClientSession(headers=headers) as session:
+
+        async with self.aio_session as session:
             return await session.post(url=self.create_article_endpoint, data=article.json())
 
 
-async def create_auth_headers():
+def create_auth_headers():
     return {
         'Accept': 'application/json',
         'Content-Type': 'application/json',

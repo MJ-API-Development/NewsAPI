@@ -35,6 +35,7 @@ tasks_lookup = {
     'alternate_news_sources': alternate_news_sources,
 }
 
+data_sink: DataConnector = DataConnector()
 
 async def scheduled_task():
     """
@@ -43,7 +44,7 @@ async def scheduled_task():
     """
     meme_tickers = await get_meme_tickers()
     can_refresh_count = 0
-    data_sink: DataConnector = DataConnector()
+
     while True:
         # Check if it's time to run the task
         current_time = datetime.datetime.now().strftime("%H:%M")
@@ -69,5 +70,6 @@ async def scheduled_task():
 @app.on_event("startup")
 async def startup_event():
     asyncio.create_task(scheduled_task())
+    asyncio.create_task(data_sink.mem_store_to_storage())
 
 app.include_router(articles_router)
