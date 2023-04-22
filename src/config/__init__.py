@@ -75,7 +75,7 @@ class MServiceHeaders(BaseSettings):
 class ConfigInstance(BaseSettings):
     APP_NAME: str = Field(default="Financial-News-Parser")
     EOD_STOCK_API_KEY: str = Field(..., env='EOD_STOCK_API_KEY')
-    DEVELOPMENT_SERVER_NAME: str = Field(..., env='DEVELOPMENT')
+    DEVELOPMENT_SERVER_NAME: str = Field(..., env='DEVELOPMENT_SERVER_NAME')
     DATABASE_SETTINGS: DatabaseSettings = DatabaseSettings()
     SERVICE_HEADERS: MServiceHeaders = MServiceHeaders()
     LOGGING: Logging = Logging()
