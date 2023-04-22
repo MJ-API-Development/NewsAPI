@@ -44,7 +44,7 @@ class DataConnector:
                 create_article_tasks = [self.send_article_to_cron(article=article) for article in self.database_buffer]
                 self.database_buffer = []
 
-            create_articles = await asyncio.gather(*create_article_tasks)
+            _ = await asyncio.gather(*create_article_tasks)
             await asyncio.sleep(delay=900)
 
     async def send_article_to_cron(self, article: NewsArticle):
