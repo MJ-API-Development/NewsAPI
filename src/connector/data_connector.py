@@ -8,6 +8,8 @@ from src.utils.my_logger import init_logger
 
 class DataConnector:
     """
+    **DataConnector**
+    
         The Data Connector Keeps the articles in memory after reaching a certain thresh hold the articles
         are sent to the backend via CRON API.
 

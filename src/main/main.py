@@ -9,6 +9,7 @@ from src.config import scheduler_settings
 from src.tasks.news_scraper import scrape_news_yahoo, alternate_news_sources
 from src.tasks import can_run_task, get_meme_tickers
 from src.connector.data_connector import DataConnector
+from telemetry import Telemetry
 
 description = """Financial News API Scrapper"""
 
@@ -37,6 +38,9 @@ tasks_lookup = {
 }
 
 data_sink: DataConnector = DataConnector()
+
+# TODO find a way to gather telemetry
+telemetry: list[Telemetry] = []
 
 
 async def scheduled_task():
@@ -73,6 +77,7 @@ async def scheduled_task():
 async def startup_event():
     asyncio.create_task(scheduled_task())
     asyncio.create_task(data_sink.mem_store_to_storage())
+
 
 # TODO ADD Some Management API to router so the service worker can be controlled and its activity monitored from
 #  the admin system

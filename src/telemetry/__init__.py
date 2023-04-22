@@ -15,7 +15,7 @@ class TimeMetrics(BaseModel):
     lowest_parse_latency: int = Field(default=0)
 
     class Config:
-        title = "Time Metrics Data"
+        title = "Financial News Parser Time Metrics Data"
 
 
 class Telemetry(BaseModel):
