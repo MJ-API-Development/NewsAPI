@@ -37,14 +37,13 @@ async def get_exchange_tickers(exchange_code: str) -> list[Stock]:
     """
     **get_exchange_tickers**
         obtains a list of stocks for a given exchange
-
     :param exchange_code:
     :return:
     """
     url: str = f'https://gateway.eod-stock-api.site/api/v1/stocks/exchange/code/{exchange_code}'
     params: dict = dict(api_key=confing_instance.EOD_STOCK_API_KEY)
 
-    response = request_session.get(url=url, params=params)
+    response: requests.Response = request_session.get(url=url, params=params)
     response.raise_for_status()
 
     if response.headers.get('Content-Type') == 'application/json':
@@ -131,7 +130,7 @@ async def download_article(link: str, timeout: int, headers: dict[str, str]) -> 
                 response.raise_for_status()
                 text: str = await response.text()
                 return text
-    except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+    except (aiohttp.ClientError, asyncio.TimeoutError):
         return None
 
 
@@ -168,15 +167,17 @@ async def can_run_task(schedule_time: str, task_details) -> bool:
     return time_diff <= 10 and not task_details.task_ran
 
 
-async def get_meme_tickers() -> dict[str, str]:
+async def get_meme_tickers(count: int = 100, offset: int = 0) -> dict[str, str]:
     """
     Returns a dictionary of ticker symbols and company names for Mexican stocks.
     :return: A dictionary of ticker symbols and company names for Mexican stocks.
     """
-    url = "https://finance.yahoo.com/most-active?count=100&offset=0"
+    url = f"https://finance.yahoo.com/most-active?count={count}&offset={offset}"
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (HTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
     try:
-        response = requests.get(url)
-    except requests.exceptions.ConnectionError:
+        request_session.headers = headers
+        response = request_session.get(url)
+    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
         return dict()
 
     soup = BeautifulSoup(response.content, "html.parser")
