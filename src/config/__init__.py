@@ -83,6 +83,15 @@ class RSSFeedSettings(BaseSettings):
         env_file_encoding = 'utf-8'
 
 
+class GatewaySettings:
+    EXCHANGES_ENDPOINT: str = Field(..., env="EXCHANGES_ENDPOINT")
+    EXCHANGE_STOCK_ENDPOINT: str = Field(..., env="EXCHANGE_STOCK_ENDPOINT")
+
+    class Config:
+        env_file = '.env.development'
+        env_file_encoding = 'utf-8'
+
+
 class ConfigInstance(BaseSettings):
     APP_NAME: str = Field(default="Financial-News-Parser")
     EOD_STOCK_API_KEY: str = Field(..., env='EOD_STOCK_API_KEY')
@@ -92,6 +101,9 @@ class ConfigInstance(BaseSettings):
     RSS_FEEDS: RSSFeedSettings = RSSFeedSettings()
     LOGGING: Logging = Logging()
     CRON_ENDPOINT: str = Field(default="CRON_ENDPOINT")
+    MEME_TICKERS_URI: str = Field(..., env="MEME_TICKERS_URI")
+    GATEWAY_API: GatewaySettings = GatewaySettings()
+    
 
     class Config:
         env_file = '.env.development'

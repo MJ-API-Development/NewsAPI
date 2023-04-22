@@ -8,8 +8,7 @@ import feedparser
 import aiohttp
 from requests_cache import CachedSession
 
-from src.models import Exchange, Stock
-from src.models import Stock, RssArticle
+from src.models import Exchange, Stock, RssArticle
 from src.config import config_instance
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
@@ -38,7 +37,7 @@ async def get_exchange_tickers(exchange_code: str) -> list[Stock]:
     :param exchange_code:
     :return:
     """
-    url: str = f'https://gateway.eod-stock-api.site/api/v1/stocks/exchange/code/{exchange_code}'
+    url: str = f'{config_instance().GATEWAY_API.EXCHANGE_STOCK_ENDPOINT}/{exchange_code}'
     params: dict = dict(api_key=config_instance.EOD_STOCK_API_KEY)
 
     response: requests.Response = request_session.get(url=url, params=params)
@@ -60,7 +59,7 @@ async def get_exchange_lists() -> list[Exchange]:
             returns a list of exchanges from the Main API
     :return:
     """
-    url: str = f'https://gateway.eod-stock-api.site/api/v1/exchanges'
+    url: str = f'{config_instance().GATEWAY_API.EXCHANGES_ENDPOINT}'
     params: dict = dict(api_key=config_instance.EOD_STOCK_API_KEY)
 
     response: requests.Response = request_session.get(url=url, params=params)
@@ -81,7 +80,7 @@ async def parse_google_feeds(rss_url: str) -> list[RssArticle]:
             will parse google rss feeds for specific subject articles
 <id>tag:google.com,2005:reader/user/00244493797674210195/state/com.google/alerts/1129709253388904655</id>
 <title>Google Alert - Financial News</title>
-<link href="https://www.google.com/alerts/feeds/00244493797674210195/1129709253388904655" rel="self"/>
+<link href="https://www.google.com/alerts/feeds/XXX/XXX" rel="self"/>
 <updated>2023-04-15T12:50:23Z</updated>
 
     for entry in feed.entries:
@@ -170,7 +169,7 @@ async def get_meme_tickers(count: int = 100, offset: int = 0) -> dict[str, str]:
     Returns a dictionary of ticker symbols and company names for Mexican stocks.
     :return: A dictionary of ticker symbols and company names for Mexican stocks.
     """
-    url = f"https://finance.yahoo.com/most-active?count={count}&offset={offset}"
+    url = f"{config_instance().MEME_TICKERS_URI}?count={count}&offset={offset}"
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (HTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
     try:
