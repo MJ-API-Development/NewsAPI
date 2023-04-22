@@ -6,7 +6,8 @@ from src.config import config_instance
 
 class DataConnector:
     """
-        will store articles in a database
+        The Data Connector Keeps the articles in memory after reaching a certain thresh hold the articles
+        are sent to the backend via CRON API.
     """
 
     def __init__(self, *args, **kwargs):
@@ -37,7 +38,9 @@ class DataConnector:
 
     async def mem_store_to_storage(self):
         """
-        18
+            **mem_store_to_storage**
+                will store articles in memory when articles buffer is full will send the articles to the backend
+                via EOD Stock  CRON API
         :return:
         """
         while True:
@@ -47,6 +50,7 @@ class DataConnector:
                 # This sends the articles to database through a cron api
                 create_article_tasks = [self.send_article_to_cron(article=article) for article in self.database_buffer]
                 create_articles = await asyncio.gather(*create_article_tasks)
+
                 self.database_buffer = []
 
     async def send_article_to_cron(self, article: NewsArticle):

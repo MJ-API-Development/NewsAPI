@@ -17,8 +17,7 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[dict[str,
     :return: A list of dictionaries containing ticker symbols as keys and a list of articles as values.
     """
     news = []
-    request_session.headers.update({
-                                       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'})
+    request_session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'})
     for ticker in tickers:
         ticker = yf.Ticker(ticker=ticker.upper(), session=request_session)
         news_df = pd.DataFrame(ticker.news)
