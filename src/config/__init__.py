@@ -72,17 +72,28 @@ class MServiceHeaders(BaseSettings):
         env_file_encoding = 'utf-8'
 
 
+class RSSFeedSettings(BaseSettings):
+    RSS_FEED_URI: str = Field(..., env="RSS_FEED_URI")
+
+    def uri_list(self) -> list[str]:
+        return [self.RSS_FEED_URI]
+
+    class Config:
+        env_file = '.env.development'
+        env_file_encoding = 'utf-8'
+
+
 class ConfigInstance(BaseSettings):
     APP_NAME: str = Field(default="Financial-News-Parser")
     EOD_STOCK_API_KEY: str = Field(..., env='EOD_STOCK_API_KEY')
     DEVELOPMENT_SERVER_NAME: str = Field(..., env='DEVELOPMENT_SERVER_NAME')
     DATABASE_SETTINGS: DatabaseSettings = DatabaseSettings()
     SERVICE_HEADERS: MServiceHeaders = MServiceHeaders()
+    RSS_FEEDS: RSSFeedSettings = RSSFeedSettings()
     LOGGING: Logging = Logging()
-    CRON_ENDPOINT: str = Field(default="https://cron.eod-stock-api.site")
+    CRON_ENDPOINT: str = Field(default="CRON_ENDPOINT")
 
     class Config:
-        """configuration file for admin scheduler_settings"""
         env_file = '.env.development'
         env_file_encoding = 'utf-8'
 

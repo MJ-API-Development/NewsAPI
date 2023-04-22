@@ -7,6 +7,7 @@ telemetry_router = APIRouter()
 @telemetry_router.api_route(path='/_admin/telemetry', methods=['GET'], include_in_schema=True)
 def gather_telemetry(request: Request):
     """
+    **gather_telemetry**
        **find a way to monitor the api then send the data over this API
     :param request:
     :return:
