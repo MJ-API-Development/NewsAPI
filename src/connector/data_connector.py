@@ -50,7 +50,9 @@ class DataConnector:
             if self.database_buffer:
                 async with self.lock:
                     self._logger.info(f"Will attempt sending {len(self.database_buffer)} Articles to the Cron API")
-                    create_article_tasks = [self.send_article_to_cron(article=article) for article in self.database_buffer if article]
+                    create_article_tasks = [self.send_article_to_cron(article=article)
+                                            for article in self.database_buffer if article]
+
                     self.database_buffer = []
 
                 _ = await asyncio.gather(*create_article_tasks)
