@@ -3,6 +3,8 @@ Helper functions to obtain ticker symbols
     utils for searching through articles
 """
 import asyncio
+import pprint
+
 import requests
 import feedparser
 import aiohttp
@@ -100,7 +102,7 @@ async def parse_google_feeds(rss_url: str) -> list[RssArticle]:
         # TODO parse the article in such a way to find all the missing data
         article_entry = dict(title=entry.title, link=entry.link, published=entry.updated)
         articles_list.append(RssArticle(**article_entry))
-
+        pprint.pprint(article_entry)
     return articles_list
 
 

@@ -35,6 +35,7 @@ class MYSQLDatabase:
             for _session in [self.create_session(self.engine) for _ in range(self.settings.TOTAL_CONNECTIONS)]:
                 yield _session
 
+    # noinspection PyUnusedLocal
     def create_session(self, engine):
         return sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
 

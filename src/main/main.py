@@ -1,6 +1,6 @@
 import datetime
 import asyncio
-
+import typing
 from fastapi import FastAPI
 
 from src.api_routes.admin import admin_router
@@ -43,9 +43,10 @@ data_sink: DataConnector = DataConnector()
 telemetry: list[Telemetry] = []
 
 
-async def scheduled_task():
+async def scheduled_task() -> None:
     """
         **scheduled_task**
+            startup tasks for running schedules
     :return:
     """
     meme_tickers = await get_meme_tickers()
@@ -79,8 +80,9 @@ async def startup_event():
     asyncio.create_task(data_sink.mem_store_to_storage())
 
 
-# TODO ADD Some Management API to router so the service worker can be controlled and its activity monitored from
-#  the admin system
+########################################################################################################################
+# ###############################  ADMIN ROUTERS  ######################################################################
+########################################################################################################################
 
 app.include_router(admin_router)
 app.include_router(telemetry_router)

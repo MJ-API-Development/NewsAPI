@@ -13,7 +13,7 @@ class RssArticle(BaseModel):
     """
     uuid: _uuid.UUID = Field(default_factory=lambda: _uuid.uuid4())
     title: str
-    publisher: str
+    publisher: str | None
     link: str
     summary: str | None
     body: str | None

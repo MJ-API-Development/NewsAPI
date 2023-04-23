@@ -45,7 +45,8 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[dict[str,
     return news
 
 
-async def alternate_news_sources() -> list[dict[str, list[dict[str, str]]]]:
+# noinspection PyUnusedLocal
+async def alternate_news_sources(*args, **kwargs) -> list[dict[str, list[dict[str, str]]]]:
     """
         **alternate_news_sources**
             search for news from alternate sources
