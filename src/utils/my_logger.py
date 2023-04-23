@@ -25,6 +25,6 @@ def init_logger(name: str = "financial-news-parser"):
     :param name:
     :return:
     """
-    is_development = socket.gethostname() == config_instance().DEVELOPMENT_SERVER_NAME
+    is_development = socket.gethostname().casefold() == config_instance().DEVELOPMENT_SERVER_NAME.casefold()
     logger = AppLogger(name=name, is_file_logger=not is_development, log_level=logging.INFO)
     return logger.logger

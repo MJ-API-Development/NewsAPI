@@ -8,7 +8,7 @@ class TimeMetrics(BaseModel):
         **TimeMetrics**
         this model is used to send time metrics
     """
-    last_reboot: int = Field(default_factory=time.monotonic())
+    last_reboot: int = Field(default_factory=lambda: int(time.monotonic()))
     highest_cron_latency: int = Field(default=0)
     lowest_cron_latency: int = Field(default=0)
     highest_parse_latency: int = Field(default=0)

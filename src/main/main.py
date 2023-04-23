@@ -9,7 +9,7 @@ from src.config import scheduler_settings
 from src.tasks.news_scraper import scrape_news_yahoo, alternate_news_sources
 from src.tasks import can_run_task, get_meme_tickers
 from src.connector.data_connector import DataConnector
-from telemetry import Telemetry
+from src.telemetry import Telemetry
 
 description = """Financial News API Scrapper"""
 
