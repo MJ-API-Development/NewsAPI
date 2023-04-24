@@ -2,13 +2,16 @@ import time
 from functools import wraps
 from pydantic import BaseModel, Field
 
+from src.utils.my_logger import init_logger
+
+telemetry_logger = init_logger('telemetry_logger')
+
 
 class TimeMetrics(BaseModel):
     """
         **TimeMetrics**
         this model is used to send time metrics
     """
-
     method_name: str = Field()
     latency: float = Field(default=0)
 
@@ -18,6 +21,9 @@ class TimeMetrics(BaseModel):
     def update_latency(self, name: str, latency: float):
         self.method_name = name
         self.latency = latency
+
+    def __str__(self):
+        return f"Method: {self.method_name} , Latency: {self.latency:.3f}"
 
 
 class ErrorMetrics(BaseModel):
@@ -31,16 +37,18 @@ class Telemetry(BaseModel):
         this model is used to send telemetry data
         to the admin about this microservice
     """
-    timing_data: list[TimeMetrics] = Field(default_factory=list())
-    errors: list[ErrorMetrics] = Field(default_factory=list())
+    timing_data: list[TimeMetrics] = Field(default_factory=lambda: list())
+    errors: list[ErrorMetrics] = Field(default_factory=lambda: list())
 
     class Config:
         title = "Financial News Parser Telemetry Data"
 
     async def add_error_metric(self, error_metric: ErrorMetrics):
+        telemetry_logger.info(error_metric)
         self.errors.append(error_metric)
 
     async def add_timing_data(self, timing_data: TimeMetrics):
+        telemetry_logger.info(timing_data)
         self.timing_data.append(timing_data)
 
     @property
@@ -50,6 +58,10 @@ class Telemetry(BaseModel):
     @property
     def timing_count(self) -> int:
         return len(self.timing_data)
+
+    @property
+    def events_count(self) -> int:
+        return self.error_count + self.timing_count
 
     async def return_data_point(self) -> dict:
         """
@@ -64,11 +76,12 @@ class Telemetry(BaseModel):
 
 class TelemetryStream:
     """
-    Telemetry stream that captures telemetry data for a specified duration
+    Telemetry stream that captures telemetry data for a specified time_elapsed
     """
 
-    def __init__(self, duration: int = 60):
-        self.duration = duration
+    def __init__(self):
+        self.elapsed_time_minutes: int = 0
+        self.method_names: set[str] = Field(default_factory=lambda: set())
         self.telemetry_data: dict[int, Telemetry] = {}
 
     async def capture_error(self, method_name: str, error_type: str):
@@ -83,6 +96,40 @@ class TelemetryStream:
         for _time, data in self.telemetry_data.items():
             yield _time, data.return_data_point()
 
+    @property
+    def highest_errors_per_minute(self) -> int:
+        return max([telemetry.error_count for telemetry in self.telemetry_data.values()])
+
+    @property
+    def lowest_errors_per_minute(self) -> int:
+        return min([telemetry.error_count for telemetry in self.telemetry_data.values()])
+
+    @property
+    def highest_latency_per_method(self) -> dict[str, float]:
+        """
+            returns method names with their highest latency numbers
+        :return:
+        """
+        method_max_latency = dict()
+        for method in list(self.method_names):
+            method_max_latency.update(
+                method=max(*[lambda metric: metric.return_data_point().get('timing_data', {}).get('latency')
+                             for metric in self.telemetry_data.values()]))
+        return method_max_latency
+
+    @property
+    def lowest_latency_per_method(self) -> dict[str, float]:
+        """
+            returns method names with their lowest latency numbers
+        :return:
+        """
+        method_max_latency = dict()
+        for method in list(self.method_names):
+            method_max_latency.update(
+                method=min(*[lambda metric: metric.return_data_point().get('timing_data', {}).get('latency')
+                             for metric in self.telemetry_data.values()]))
+        return method_max_latency
+
 
 def capture_latency(name: str):
     def decorator(func):
@@ -90,13 +137,21 @@ def capture_latency(name: str):
         async def wrapper(*args, **kwargs):
             current_minute = int(time.time() / 60)
             start_time = time.monotonic()
-            # TODO add try exceot Clauses for all error types then capture the data on the telemtry stream
+            # TODO add try Except Clauses for all error types then capture the data on the telemetry stream
             result = await func(*args, **kwargs)
-            end_time = time.monotonic()
-            duration = end_time - start_time
-            telemetry = TimeMetrics(method_name=name, latency=duration)
+            time_metrics: TimeMetrics = TimeMetrics(method_name=name, latency=(time.monotonic() - start_time))
 
-            await telemetry_stream.telemetry_data[current_minute].add_timing_data(timing_data=telemetry)
+            if telemetry_stream.telemetry_data.get(current_minute, False):
+                await telemetry_stream.telemetry_data[current_minute].add_timing_data(timing_data=time_metrics)
+            else:
+                telemetry = Telemetry()
+                await telemetry.add_timing_data(timing_data=time_metrics)
+                telemetry_stream.telemetry_data.update(current_minute=telemetry)
+                telemetry_stream.elapsed_time_minutes += 1
+
+            # This adds a method name into the set of method_names
+            telemetry_stream.method_names.add(name)
+
             return result
 
         return wrapper

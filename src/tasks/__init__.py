@@ -15,7 +15,7 @@ from src.config import config_instance
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta, time
 
-from telemetry import capture_latency
+from src.telemetry import capture_latency
 
 request_session = CachedSession('finance_news.cache', use_cache_dir=True,
                                 cache_control=False,
@@ -77,6 +77,7 @@ async def get_exchange_lists() -> list[Exchange]:
             return [Exchange(**exchange) for exchange in exchange_list]
     return []
 
+
 @capture_latency(name='parse_google_feeds')
 async def parse_google_feeds(rss_url: str) -> list[RssArticle]:
     """
@@ -107,6 +108,7 @@ async def parse_google_feeds(rss_url: str) -> list[RssArticle]:
         pprint.pprint(article_entry)
     return articles_list
 
+
 @capture_latency(name='do_soup')
 async def do_soup(html) -> tuple[str, str]:
     """
@@ -117,6 +119,7 @@ async def do_soup(html) -> tuple[str, str]:
     soup = BeautifulSoup(html, 'html.parser')
     paragraphs = soup.find_all('p')
     return paragraphs[0], '\n\n'.join([p.get_text() for p in paragraphs])
+
 
 @capture_latency(name='download_article')
 async def download_article(link: str, timeout: int, headers: dict[str, str]) -> tuple[str, str] | tuple[None, str]:
@@ -166,6 +169,7 @@ async def can_run_task(schedule_time: str, task_details) -> bool:
 
     # Check if the time difference is less than or equal to 10 minutes and the task has not already run
     return time_diff <= 10 and not task_details.task_ran
+
 
 @capture_latency(name='get_meme_tickers')
 async def get_meme_tickers(count: int = 100, offset: int = 0) -> dict[str, str]:

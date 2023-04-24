@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from src.models import RssArticle
 from src.tasks.rss_feeds import parse_feeds
 from src.tasks import download_article, request_session
-from telemetry import capture_latency
+from src.telemetry import capture_latency
 
 
 @capture_latency(name='scrape_news_yahoo')

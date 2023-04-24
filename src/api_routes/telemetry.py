@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request
 
-from telemetry import telemetry_stream
+from src.telemetry import telemetry_stream
 
 telemetry_router = APIRouter()
 
