@@ -15,7 +15,7 @@ from src.config import config_instance
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta, time
 
-from src.telemetry import capture_latency
+from src.telemetry import capture_telemetry
 
 request_session = CachedSession('finance_news.cache', use_cache_dir=True,
                                 cache_control=False,
@@ -78,7 +78,7 @@ async def get_exchange_lists() -> list[Exchange]:
     return []
 
 
-@capture_latency(name='parse_google_feeds')
+@capture_telemetry(name='parse_google_feeds')
 async def parse_google_feeds(rss_url: str) -> list[RssArticle]:
     """
         **parse_google_feeds**
@@ -109,7 +109,7 @@ async def parse_google_feeds(rss_url: str) -> list[RssArticle]:
     return articles_list
 
 
-@capture_latency(name='do_soup')
+@capture_telemetry(name='do_soup')
 async def do_soup(html) -> tuple[str, str]:
     """
         parse the whole document and return formatted text
@@ -121,7 +121,7 @@ async def do_soup(html) -> tuple[str, str]:
     return paragraphs[0], '\n\n'.join([p.get_text() for p in paragraphs])
 
 
-@capture_latency(name='download_article')
+@capture_telemetry(name='download_article')
 async def download_article(link: str, timeout: int, headers: dict[str, str]) -> tuple[str, str] | tuple[None, str]:
     """
     **download_article**
@@ -171,7 +171,7 @@ async def can_run_task(schedule_time: str, task_details) -> bool:
     return time_diff <= 10 and not task_details.task_ran
 
 
-@capture_latency(name='get_meme_tickers')
+@capture_telemetry(name='get_meme_tickers')
 async def get_meme_tickers(count: int = 100, offset: int = 0) -> dict[str, str]:
     """
     Returns a dictionary of ticker symbols and company names for Mexican stocks.

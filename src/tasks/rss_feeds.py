@@ -4,12 +4,12 @@ import itertools
 from src.models import RssArticle
 from src.tasks import parse_google_feeds
 from src.config import config_instance
-from src.telemetry import capture_latency
+from src.telemetry import capture_telemetry
 
 rss_lists: list[str] = config_instance().RSS_FEEDS.uri_list()
 
 
-@capture_latency(name='parse_feeds')
+@capture_telemetry(name='parse_feeds')
 async def parse_feeds() -> list[RssArticle]:
     """
         **parse_feeds**

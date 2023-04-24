@@ -63,7 +63,7 @@ class Telemetry(BaseModel):
     def events_count(self) -> int:
         return self.error_count + self.timing_count
 
-    async def return_data_point(self) -> dict:
+    def return_data_point(self) -> dict:
         """
         Returns the telemetry data as a dictionary
         """
@@ -81,7 +81,7 @@ class TelemetryStream:
 
     def __init__(self):
         self.elapsed_time_minutes: int = 0
-        self.method_names: set[str] = Field(default_factory=lambda: set())
+        self.method_names: set[str] = set()
         self.telemetry_data: dict[int, Telemetry] = {}
 
     async def capture_error(self, method_name: str, error_type: str):
@@ -90,7 +90,22 @@ class TelemetryStream:
         """
         current_minute: int = int(time.time() / 60)
         error_metric = ErrorMetrics(method_name=method_name, error_type=error_type)
-        await self.telemetry_data[current_minute].add_error_metric(error_metric=error_metric)
+        if self.telemetry_data.get(current_minute, False):
+            await self.telemetry_data[current_minute].add_error_metric(error_metric=error_metric)
+        else:
+            telemetry = Telemetry()
+            await telemetry.add_error_metric(error_metric=error_metric)
+            self.telemetry_data.update({f'{current_minute}': telemetry})
+
+    async def capture_time_metrics(self, name, current_minute, start_time):
+        time_metrics: TimeMetrics = TimeMetrics(method_name=name, latency=(time.monotonic() - start_time))
+        if self.telemetry_data.get(current_minute, False):
+            await self.telemetry_data[current_minute].add_timing_data(timing_data=time_metrics)
+        else:
+            telemetry: Telemetry = Telemetry()
+            await telemetry.add_timing_data(timing_data=time_metrics)
+            self.telemetry_data.update(current_minute=telemetry)
+            self.elapsed_time_minutes += 1
 
     async def return_data_stream(self) -> tuple[time, dict[str, int | list[dict[str, str | int]]]]:
         for _time, data in self.telemetry_data.items():
@@ -98,11 +113,11 @@ class TelemetryStream:
 
     @property
     def highest_errors_per_minute(self) -> int:
-        return max([telemetry.error_count for telemetry in self.telemetry_data.values()])
+        return max(*[telemetry.error_count for telemetry in self.telemetry_data.values()])
 
     @property
     def lowest_errors_per_minute(self) -> int:
-        return min([telemetry.error_count for telemetry in self.telemetry_data.values()])
+        return min(*[telemetry.error_count for telemetry in self.telemetry_data.values()])
 
     @property
     def highest_latency_per_method(self) -> dict[str, float]:
@@ -111,11 +126,14 @@ class TelemetryStream:
             returns method names with their highest latency numbers
         :return:
         """
+        def get_latency(metric: Telemetry) -> float:
+            _metric_data: dict[str, dict[str, str | float]] = metric.return_data_point()
+            return _metric_data.get('timing_data', {}).get('latency')
+
         method_max_latency = dict()
         for method in list(self.method_names):
-            method_max_latency.update(
-                method=max(*[lambda metric: metric.return_data_point().get('timing_data', {}).get('latency')
-                             for metric in self.telemetry_data.values()]))
+            method_max_latency.update({f'{method}': max(*[lambda metric: get_latency(metric)
+                                                          for metric in self.telemetry_data.values()])})
         return method_max_latency
 
     @property
@@ -125,11 +143,14 @@ class TelemetryStream:
             returns method names with their lowest latency numbers
         :return:
         """
+        def get_latency(metric: Telemetry) -> float:
+            _metric_data: dict[str, dict[str, str | float]] = metric.return_data_point()
+            return _metric_data.get('timing_data', {}).get('latency')
+
         method_max_latency = dict()
         for method in list(self.method_names):
-            method_max_latency.update(
-                method=min(*[lambda metric: metric.return_data_point().get('timing_data', {}).get('latency')
-                             for metric in self.telemetry_data.values()]))
+            method_max_latency.update({
+                f'{method}': min(*[lambda metric: get_latency(metric=metric) for metric in self.telemetry_data.values()])})
         return method_max_latency
 
     def dict(self) -> dict[str, str | float | dict[str, float]]:
@@ -144,29 +165,25 @@ class TelemetryStream:
             lowest_latency_per_method=self.lowest_latency_per_method)
 
 
-def capture_latency(name: str):
+def capture_telemetry(name: str):
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            current_minute = int(time.time() / 60)
-            start_time = time.monotonic()
+            current_minute: int = int(time.time() / 60)
+            start_time: float = time.monotonic()
             # TODO add try Except Clauses for all error types then capture the data on the telemetry stream
-            result = await func(*args, **kwargs)
-            time_metrics: TimeMetrics = TimeMetrics(method_name=name, latency=(time.monotonic() - start_time))
-
-            if telemetry_stream.telemetry_data.get(current_minute, False):
-                await telemetry_stream.telemetry_data[current_minute].add_timing_data(timing_data=time_metrics)
-            else:
-                telemetry = Telemetry()
-                await telemetry.add_timing_data(timing_data=time_metrics)
-                telemetry_stream.telemetry_data.update(current_minute=telemetry)
-                telemetry_stream.elapsed_time_minutes += 1
-
-            # This adds a method name into the set of method_names
-            telemetry_stream.method_names.add(name)
+            try:
+                result = await func(*args, **kwargs)
+            except Exception as e:
+                telemetry_logger.error(e)
+                await telemetry_stream.capture_error(method_name=name, error_type=e)
+                result = None
+            finally:
+                await telemetry_stream.capture_time_metrics(name=name, current_minute=current_minute, start_time=start_time)
+                # This adds a method name into the set of method_names
+                telemetry_stream.method_names.add(name)
 
             return result
-
         return wrapper
 
     return decorator
