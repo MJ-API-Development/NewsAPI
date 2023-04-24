@@ -13,7 +13,9 @@ from requests_cache import CachedSession
 from src.models import Exchange, Stock, RssArticle
 from src.config import config_instance
 from bs4 import BeautifulSoup
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
+
+from telemetry import capture_latency
 
 request_session = CachedSession('finance_news.cache', use_cache_dir=True,
                                 cache_control=False,
@@ -75,7 +77,7 @@ async def get_exchange_lists() -> list[Exchange]:
             return [Exchange(**exchange) for exchange in exchange_list]
     return []
 
-
+@capture_latency(name='parse_google_feeds')
 async def parse_google_feeds(rss_url: str) -> list[RssArticle]:
     """
         **parse_google_feeds**
@@ -105,7 +107,7 @@ async def parse_google_feeds(rss_url: str) -> list[RssArticle]:
         pprint.pprint(article_entry)
     return articles_list
 
-
+@capture_latency(name='do_soup')
 async def do_soup(html) -> tuple[str, str]:
     """
         parse the whole document and return formatted text
@@ -116,7 +118,7 @@ async def do_soup(html) -> tuple[str, str]:
     paragraphs = soup.find_all('p')
     return paragraphs[0], '\n\n'.join([p.get_text() for p in paragraphs])
 
-
+@capture_latency(name='download_article')
 async def download_article(link: str, timeout: int, headers: dict[str, str]) -> tuple[str, str] | tuple[None, str]:
     """
     **download_article**
@@ -156,16 +158,16 @@ async def can_run_task(schedule_time: str, task_details) -> bool:
     :param task_details: A dictionary containing details about the task, including a boolean field 'task_ran'.
     :return: True if the task can be executed, False otherwise.
     """
-    current_time = datetime.now().time()
-    schedule_time = await convert_to_time(schedule_time)
+    current_time: time = datetime.now().time()
+    schedule_time: time = await convert_to_time(schedule_time)
 
     # Calculate the difference between the schedule time and current time in minutes
-    time_diff = abs(schedule_time.hour - current_time.hour) * 60 + abs(schedule_time.minute - current_time.minute)
+    time_diff: int = abs(schedule_time.hour - current_time.hour) * 60 + abs(schedule_time.minute - current_time.minute)
 
     # Check if the time difference is less than or equal to 10 minutes and the task has not already run
     return time_diff <= 10 and not task_details.task_ran
 
-
+@capture_latency(name='get_meme_tickers')
 async def get_meme_tickers(count: int = 100, offset: int = 0) -> dict[str, str]:
     """
     Returns a dictionary of ticker symbols and company names for Mexican stocks.

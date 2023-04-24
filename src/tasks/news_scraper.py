@@ -6,8 +6,10 @@ from bs4 import BeautifulSoup
 from src.models import RssArticle
 from src.tasks.rss_feeds import parse_feeds
 from src.tasks import download_article, request_session
+from telemetry import capture_latency
 
 
+@capture_latency(name='scrape_news_yahoo')
 async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[dict[str, str]]]]:
     """
     **scrape_news_yahoo**
@@ -17,7 +19,8 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[dict[str,
     :return: A list of dictionaries containing ticker symbols as keys and a list of articles as values.
     """
     news = []
-    request_session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'})
+    request_session.headers.update({
+                                       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'})
     for ticker in tickers:
         ticker = yf.Ticker(ticker=ticker.upper(), session=request_session)
         news_df = pd.DataFrame(ticker.news)
@@ -46,6 +49,7 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[dict[str,
 
 
 # noinspection PyUnusedLocal
+@capture_latency(name='alternate_news_sources')
 async def alternate_news_sources(*args, **kwargs) -> list[dict[str, list[dict[str, str]]]]:
     """
         **alternate_news_sources**
@@ -70,6 +74,7 @@ async def alternate_news_sources(*args, **kwargs) -> list[dict[str, list[dict[st
     return articles_list
 
 
+@capture_latency(name='parse_article')
 async def parse_article(article: RssArticle) -> tuple[str, str, list[dict[str, str | int]]]:
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}

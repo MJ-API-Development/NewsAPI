@@ -49,7 +49,7 @@ async def scheduled_task() -> None:
             startup tasks for running schedules
     :return:
     """
-    meme_tickers = await get_meme_tickers()
+    meme_tickers: dict[str, str] = await get_meme_tickers()
     can_refresh_count = 0
 
     while True:
@@ -68,7 +68,8 @@ async def scheduled_task() -> None:
 
         # Sleep for 10 minute
         await asyncio.sleep(600)
-        if can_refresh_count == 6:
+        # will refresh the tickers in 3 hours - cache lasts until then
+        if can_refresh_count == 6*3:
             # will refresh meme tickers every hour
             meme_tickers = await get_meme_tickers()
             can_refresh_count = 0

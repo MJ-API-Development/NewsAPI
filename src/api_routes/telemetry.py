@@ -1,6 +1,11 @@
 from fastapi import APIRouter, Request
 
+from telemetry import telemetry_stream
+
 telemetry_router = APIRouter()
+
+# This allows to stream telemetry data
+data_stream = telemetry_stream.return_data_stream()
 
 
 # noinspection PyUnusedLocal
@@ -12,4 +17,4 @@ def gather_telemetry(request: Request):
     :param request:
     :return:
     """
-    pass
+    return next(data_stream)
