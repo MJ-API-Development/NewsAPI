@@ -107,6 +107,7 @@ class TelemetryStream:
     @property
     def highest_latency_per_method(self) -> dict[str, float]:
         """
+        **highest_latency_per_method**
             returns method names with their highest latency numbers
         :return:
         """
@@ -120,6 +121,7 @@ class TelemetryStream:
     @property
     def lowest_latency_per_method(self) -> dict[str, float]:
         """
+        **lowest_latency_per_method
             returns method names with their lowest latency numbers
         :return:
         """
@@ -129,6 +131,17 @@ class TelemetryStream:
                 method=min(*[lambda metric: metric.return_data_point().get('timing_data', {}).get('latency')
                              for metric in self.telemetry_data.values()]))
         return method_max_latency
+
+    def dict(self) -> dict[str, str | float | dict[str, float]]:
+        """
+
+        :return:
+        """
+        return dict(
+            highest_errors_per_minute=self.highest_errors_per_minute,
+            lowest_errors_per_minute=self.lowest_errors_per_minute,
+            highest_latency_per_method=self.highest_latency_per_method,
+            lowest_latency_per_method=self.lowest_latency_per_method)
 
 
 def capture_latency(name: str):
@@ -159,4 +172,4 @@ def capture_latency(name: str):
     return decorator
 
 
-telemetry_stream = TelemetryStream()
+telemetry_stream: TelemetryStream = TelemetryStream()

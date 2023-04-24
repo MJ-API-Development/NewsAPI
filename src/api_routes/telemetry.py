@@ -9,7 +9,7 @@ data_stream = telemetry_stream.return_data_stream()
 
 
 # noinspection PyUnusedLocal
-@telemetry_router.api_route(path='/_admin/telemetry', methods=['GET'], include_in_schema=True)
+@telemetry_router.api_route(path='/_admin/telemetry/stream', methods=['GET'], include_in_schema=True)
 def gather_telemetry(request: Request):
     """
     **gather_telemetry**
@@ -18,3 +18,14 @@ def gather_telemetry(request: Request):
     :return:
     """
     return next(data_stream)
+
+
+@telemetry_router.api_route(path='/_admin/telemetry/stats', methods=['GET'], include_in_schema=True)
+def gather_telemetry(request: Request):
+    """
+    **gather_telemetry**
+       **find a way to monitor the api then send the data over this API
+    :param request:
+    :return:
+    """
+    return telemetry_stream.dict()
