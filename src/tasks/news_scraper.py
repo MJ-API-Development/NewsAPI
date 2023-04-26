@@ -76,6 +76,9 @@ async def alternate_news_sources(*args, **kwargs) -> list[dict[str, list[dict[st
 
 @capture_telemetry(name='parse_article')
 async def parse_article(article: RssArticle) -> tuple[str, str, list[dict[str, str | int]]]:
+    """**parse_article**
+    will parse articles from yfinance
+    """
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
 
