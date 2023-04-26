@@ -28,7 +28,7 @@ class TimeMetrics(BaseModel):
 
 class ErrorMetrics(BaseModel):
     method_name: str = Field()
-    error_name: str = Field()
+    error_type: str = Field()
 
 
 class Telemetry(BaseModel):
