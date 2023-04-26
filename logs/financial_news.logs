@@ -1,0 +1,6 @@
+INFO:     Application startup complete.
+INFO:     127.0.0.1:52281 - "GET /_admin/telemetry/stream-logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52282 - "GET /_admin/telemetry/stream-logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52282 - "GET /_admin/telemetry/stream-logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52282 - "GET /_admin/telemetry/stream-logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52282 - "GET /_admin/telemetry/stream-logs HTTP/1.1" 200 OK

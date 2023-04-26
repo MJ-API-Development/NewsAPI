@@ -6,13 +6,14 @@ from src.config import config_instance
 
 
 class AppLogger:
+    logging_file = f'logs/{config_instance().LOGGING.filename}'
     def __init__(self, name: str, is_file_logger: bool = False, log_level: int = logging.INFO):
-        logging_file = f'logs/{config_instance().LOGGING.filename}'
+
         logger_name = name if name else config_instance().APP_NAME
         self.logger = logging.getLogger(logger_name)
         self.logger.setLevel(level=log_level)
 
-        handler = logging.FileHandler(logging_file) if is_file_logger else logging.StreamHandler(sys.stdout)
+        handler = logging.FileHandler(self.logging_file) if is_file_logger else logging.StreamHandler(sys.stdout)
         formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
