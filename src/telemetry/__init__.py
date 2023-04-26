@@ -180,8 +180,8 @@ def capture_telemetry(name: str):
             try:
                 result = await func(*args, **kwargs)
             except Exception as e:
-                telemetry_logger.error(e)
-                await telemetry_stream.capture_error(method_name=name, error_type=e)
+                telemetry_logger.error(str(e))
+                await telemetry_stream.capture_error(method_name=name, error_type=str(e))
                 result = None
             finally:
                 await telemetry_stream.capture_time_metrics(name=name, current_minute=current_minute,

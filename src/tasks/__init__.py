@@ -103,9 +103,10 @@ async def parse_google_feeds(rss_url: str) -> list[RssArticle]:
     articles_list = []
     for entry in feed.entries:
         # TODO parse the article in such a way to find all the missing data
-        article_entry = dict(title=entry.title, link=entry.link, published=entry.updated)
-        articles_list.append(RssArticle(**article_entry))
-        pprint.pprint(article_entry)
+        if entry is not None:
+            article_entry = dict(title=entry.title, link=entry.link, published=entry.updated)
+            articles_list.append(RssArticle(**article_entry))
+            pprint.pprint(article_entry)
     return articles_list
 
 

@@ -30,6 +30,9 @@ class DataConnector:
             :param article_list:
             :return:
         """
+        if not article_list:
+            return
+
         self._logger.info(f"incoming articles Total : {len(article_list)}")
         async with self.lock:
             for article in article_list:
