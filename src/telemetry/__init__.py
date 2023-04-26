@@ -119,6 +119,7 @@ class TelemetryStream:
     def lowest_errors_per_minute(self) -> int:
         return min([telemetry.error_count for telemetry in self.telemetry_data.values()])
 
+    # noinspection PyUnusedLocal
     @property
     def highest_latency_per_method(self) -> dict[str, float]:
         """
@@ -126,6 +127,7 @@ class TelemetryStream:
             returns method names with their highest latency numbers
         :return:
         """
+
         def get_latency(metric: Telemetry) -> float:
             _metric_data: dict[str, dict[str, str | float]] = metric.return_data_point()
             return _metric_data.get('timing_data', {}).get('latency')
@@ -133,9 +135,10 @@ class TelemetryStream:
         method_max_latency = dict()
         for method in list(self.method_names):
             method_max_latency.update({f'{method}': max([lambda metric: get_latency(metric)
-                                                          for metric in self.telemetry_data.values()])})
+                                                         for metric in self.telemetry_data.values()])})
         return method_max_latency
 
+    # noinspection PyUnusedLocal
     @property
     def lowest_latency_per_method(self) -> dict[str, float]:
         """
@@ -143,6 +146,7 @@ class TelemetryStream:
             returns method names with their lowest latency numbers
         :return:
         """
+
         def get_latency(metric: Telemetry) -> float:
             _metric_data: dict[str, dict[str, str | float]] = metric.return_data_point()
             return _metric_data.get('timing_data', {}).get('latency')
@@ -150,7 +154,8 @@ class TelemetryStream:
         method_max_latency = dict()
         for method in list(self.method_names):
             method_max_latency.update({
-                f'{method}': min([lambda metric: get_latency(metric=metric) for metric in self.telemetry_data.values()])})
+                f'{method}': min(
+                    [lambda metric: get_latency(metric=metric) for metric in self.telemetry_data.values()])})
         return method_max_latency
 
     def dict(self) -> dict[str, str | float | dict[str, float]]:
@@ -179,11 +184,13 @@ def capture_telemetry(name: str):
                 await telemetry_stream.capture_error(method_name=name, error_type=e)
                 result = None
             finally:
-                await telemetry_stream.capture_time_metrics(name=name, current_minute=current_minute, start_time=start_time)
+                await telemetry_stream.capture_time_metrics(name=name, current_minute=current_minute,
+                                                            start_time=start_time)
                 # This adds a method name into the set of method_names
                 telemetry_stream.method_names.add(name)
 
             return result
+
         return wrapper
 
     return decorator
