@@ -83,7 +83,7 @@ class DataConnector:
                 if response.headers.get('Content-Type') == 'application/json':
                     response_data: dict[str, str | dict[str, str]] = response.json()
 
-                    self._logger.info(f"sent article : response : {response_data.get('payload')}")
+                    self._logger.info(f"Sent article : response : {response_data.get('payload')}")
                     return response_data
                 self._logger.error(f"Error sending article to database : {response.text}")
             except aiohttp.ClientError as e:

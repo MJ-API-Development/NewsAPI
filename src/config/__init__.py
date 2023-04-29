@@ -103,7 +103,6 @@ class ConfigInstance(BaseSettings):
     CRON_ENDPOINT: str = Field(default="CRON_ENDPOINT")
     MEME_TICKERS_URI: str = Field(..., env="MEME_TICKERS_URI")
     GATEWAY_API: GatewaySettings = GatewaySettings()
-    
 
     class Config:
         env_file = '.env.development'

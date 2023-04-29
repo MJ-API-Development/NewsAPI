@@ -22,6 +22,11 @@ class NewsArticle(BaseModel):
 
     @property
     def publish_time(self) -> datetime:
+        """
+            **publish_time**
+                publish_time time the article was published
+        :return:
+        """
         return datetime.fromtimestamp(self.providerPublishTime)
 
     class Config:
