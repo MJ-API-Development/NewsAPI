@@ -8,6 +8,7 @@ import asyncio
 from src.config import config_instance
 from src.utils import camel_to_snake
 from src.utils.my_logger import init_logger
+from src.telemetry import capture_telemetry
 
 
 class DataConnector:
@@ -21,7 +22,7 @@ class DataConnector:
     # noinspection PyUnusedLocal
     def __init__(self, *args, **kwargs):
         self.lock: asyncio.Lock = asyncio.Lock()
-        self.mem_buffer: list[NewsArticle] | None = None
+        self.mem_buffer: list[NewsArticle] | None = []
         self.create_article_endpoint: str = f'{config_instance().CRON_ENDPOINT}/api/v1/news/article'
         self.aio_session: aiohttp.ClientSession = aiohttp.ClientSession(headers=create_auth_headers())
         self._logger = init_logger(camel_to_snake(self.__class__.__name__))
@@ -42,6 +43,7 @@ class DataConnector:
                     self.mem_buffer.append(article)
             self._logger.info(f"Done sending articles to the Data Connector")
 
+    @capture_telemetry(name='mem_store-to-storage')
     async def mem_store_to_storage(self):
         """
             **mem_store_to_storage**
@@ -64,8 +66,9 @@ class DataConnector:
             else:
                 self._logger.info(f"There is no articles to send to the CRON API")
 
-            await asyncio.sleep(delay=900)
+            await asyncio.sleep(delay=90)
 
+    @capture_telemetry(name='send-article-to-cron')
     async def send_article_to_cron(self, article: NewsArticle):
         """
             **send_article_to_cron**
@@ -73,9 +76,9 @@ class DataConnector:
         :param article:
         :return:
         """
-        async with self.aio_session as session:
+        async with aiohttp.ClientSession(headers=create_auth_headers()) as session:
             try:
-                response = await session.post(url=self.create_article_endpoint, data=article.json())
+                response = await session.post(url=self.create_article_endpoint, data=article)
                 response.raise_for_status()
                 if response.headers.get('Content-Type') == 'application/json':
                     response_data: dict[str, str | dict[str, str]] = response.json()
