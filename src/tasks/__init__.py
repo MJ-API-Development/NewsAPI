@@ -106,11 +106,10 @@ async def parse_google_feeds(rss_url: str) -> list[RssArticle]:
     #  Creating RssArticles List
     articles_list = []
     for entry in feed.entries:
-        # TODO parse the article in such a way to find all the missing data
         if entry is not None:
             article_entry = dict(title=entry.title, link=entry.link, published=entry.updated)
             articles_list.append(RssArticle(**article_entry))
-            tasks_logger.info(article_entry)
+    tasks_logger.info(f"total articles found : {len(articles_list)}")
     return articles_list
 
 
@@ -201,5 +200,4 @@ async def get_meme_tickers(count: int = 100, offset: int = 0) -> dict[str, str]:
         tickers[symbol] = name
 
     tasks_logger.info(tickers)
-
     return tickers

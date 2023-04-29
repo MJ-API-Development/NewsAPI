@@ -46,7 +46,6 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[dict[str,
                 summary=summary,
                 body=body
             ))
-            news_scrapper_logger.info(articles[i])
         news.append({ticker: articles})
 
     return news

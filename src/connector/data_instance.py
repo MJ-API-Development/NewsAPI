@@ -27,7 +27,7 @@ class MYSQLDatabase:
             # self.get_session = next(session_gen)
             self.get_session = self.create_session(self.engine)
             config_instance.DEBUG and self._logger.info(f"Connected to database : {db_url}")
-        except OperationalError as e:
+        except OperationalError:
             config_instance.DEBUG and self._logger.error("Unable to connect to MYSQL Database")
 
     def session_generator(self) -> Self:

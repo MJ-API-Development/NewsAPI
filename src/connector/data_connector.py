@@ -16,8 +16,6 @@ class DataConnector:
 
         The Data Connector Keeps the articles in memory after reaching a certain thresh hold the articles
         are sent to the backend via CRON API.
-
-        TODO - Feature Version must use Redis as a Message broker to store & send articles.
     """
 
     # noinspection PyUnusedLocal
