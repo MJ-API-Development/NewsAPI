@@ -1,4 +1,8 @@
+from typing import Coroutine
+
 import aiohttp
+
+from src.exceptions import RequestError
 from src.models import NewsArticle
 import asyncio
 from src.config import config_instance
@@ -53,9 +57,9 @@ class DataConnector:
             if self.mem_buffer:
                 async with self.lock:
                     self._logger.info(f"Will attempt sending {len(self.mem_buffer)} Articles to the Cron API")
-                    create_article_tasks = [self.send_article_to_cron(article=article)
-                                            for article in self.mem_buffer if article]
-                    self.mem_buffer = []
+                    create_article_tasks: list[Coroutine] = [self.send_article_to_cron(article=article)
+                                                             for article in self.mem_buffer if article]
+                    self.mem_buffer: list = []
 
                 _ = await asyncio.gather(*create_article_tasks)
 
@@ -72,7 +76,18 @@ class DataConnector:
         :return:
         """
         async with self.aio_session as session:
-            return await session.post(url=self.create_article_endpoint, data=article.json())
+            try:
+                response = await session.post(url=self.create_article_endpoint, data=article.json())
+                response.raise_for_status()
+                if response.headers.get('Content-Type') == 'application/json':
+                    response_data: dict[str, str | dict[str, str]] = response.json()
+
+                    self._logger.info(f"sent article : response : {response_data.get('payload')}")
+                    return response_data
+                self._logger.error(f"Error sending article to database : {response.text}")
+            except aiohttp.ClientError as e:
+                self._logger.error(f"aiohttp.ClientError caught while sending article to database : {e}")
+                raise RequestError()
 
 
 def create_auth_headers():
