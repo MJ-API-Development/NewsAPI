@@ -2,6 +2,7 @@ import time
 from functools import wraps
 from pydantic import BaseModel, Field
 
+from src.exceptions import ErrorParsingFeeds, ErrorParsingHTMLDocument, RequestError
 from src.utils.my_logger import init_logger
 
 telemetry_logger = init_logger('telemetry_logger')
@@ -176,10 +177,9 @@ def capture_telemetry(name: str):
         async def wrapper(*args, **kwargs):
             current_minute: int = int(time.time() / 60)
             start_time: float = time.monotonic()
-            # TODO add try Except Clauses for all error types then capture the data on the telemetry stream
             try:
                 result = await func(*args, **kwargs)
-            except Exception as e:
+            except (ErrorParsingFeeds, ErrorParsingHTMLDocument, RequestError) as e:
                 telemetry_logger.error(str(e))
                 await telemetry_stream.capture_error(method_name=name, error_type=str(e))
                 result = None
@@ -190,9 +190,7 @@ def capture_telemetry(name: str):
                 telemetry_stream.method_names.add(name)
 
             return result
-
         return wrapper
-
     return decorator
 
 

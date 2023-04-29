@@ -3,19 +3,23 @@ Helper functions to obtain ticker symbols
     utils for searching through articles
 """
 import asyncio
-import pprint
+
 
 import requests
 import feedparser
 import aiohttp
 from requests_cache import CachedSession
 
+from src.exceptions import RequestError
 from src.models import Exchange, Stock, RssArticle
 from src.config import config_instance
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta, time
 
 from src.telemetry import capture_telemetry
+from src.utils.my_logger import init_logger
+
+tasks_logger = init_logger('tasks-logger')
 
 request_session = CachedSession('finance_news.cache', use_cache_dir=True,
                                 cache_control=False,
@@ -106,7 +110,7 @@ async def parse_google_feeds(rss_url: str) -> list[RssArticle]:
         if entry is not None:
             article_entry = dict(title=entry.title, link=entry.link, published=entry.updated)
             articles_list.append(RssArticle(**article_entry))
-            pprint.pprint(article_entry)
+            tasks_logger.info(article_entry)
     return articles_list
 
 
@@ -136,7 +140,7 @@ async def download_article(link: str, timeout: int, headers: dict[str, str]) -> 
                 text: str = await response.text()
                 return text
     except (aiohttp.ClientError, asyncio.TimeoutError):
-        return None
+        raise RequestError()
 
 
 async def convert_to_time(time_str: str) -> datetime.time:
@@ -167,9 +171,9 @@ async def can_run_task(schedule_time: str, task_details) -> bool:
 
     # Calculate the difference between the schedule time and current time in minutes
     time_diff: int = abs(schedule_time.hour - current_time.hour) * 60 + abs(schedule_time.minute - current_time.minute)
-
+    tasks_logger.info(f"testing if we can run task : {time_diff}")
     # Check if the time difference is less than or equal to 10 minutes and the task has not already run
-    return time_diff <= 10 and not task_details.task_ran
+    return time_diff <= 10*60 and not task_details.task_ran
 
 
 @capture_telemetry(name='get_meme_tickers')
@@ -195,5 +199,7 @@ async def get_meme_tickers(count: int = 100, offset: int = 0) -> dict[str, str]:
         symbol = cells[0].text.strip()
         name = cells[1].text.strip()
         tickers[symbol] = name
+
+    tasks_logger.info(tickers)
 
     return tickers

@@ -1,6 +1,5 @@
 import datetime
 import asyncio
-import typing
 from fastapi import FastAPI
 
 from src.api_routes.admin import admin_router

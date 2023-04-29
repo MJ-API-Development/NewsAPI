@@ -1,12 +1,16 @@
 import pandas as pd
-import pprint
+
 import yfinance as yf
 from bs4 import BeautifulSoup
 
+from src.exceptions import ErrorParsingHTMLDocument
 from src.models import RssArticle
 from src.tasks.rss_feeds import parse_feeds
 from src.tasks import download_article, request_session
 from src.telemetry import capture_telemetry
+from src.utils.my_logger import init_logger
+
+news_scrapper_logger = init_logger()
 
 
 @capture_telemetry(name='scrape_news_yahoo')
@@ -20,7 +24,7 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[dict[str,
     """
     news = []
     request_session.headers.update({
-                                       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'})
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'})
     for ticker in tickers:
         ticker = yf.Ticker(ticker=ticker.upper(), session=request_session)
         news_df = pd.DataFrame(ticker.news)
@@ -42,7 +46,7 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[dict[str,
                 summary=summary,
                 body=body
             ))
-            pprint.pprint(articles[i])
+            news_scrapper_logger.info(articles[i])
         news.append({ticker: articles})
 
     return news
@@ -58,8 +62,10 @@ async def alternate_news_sources(*args, **kwargs) -> list[dict[str, list[dict[st
     """
     articles_list: list[RssArticle] = await parse_feeds()
     for i, article in enumerate(articles_list):
-
-        summary, body, images = await parse_article(article)
+        try:
+            summary, body, images = await parse_article(article)
+        except TypeError:
+            raise ErrorParsingHTMLDocument()
         # NOTE - probably nothing to lose sleep over, but if an article does not
         # have images it won't be saved
         if not all([summary, body, images]):
@@ -81,18 +87,21 @@ async def parse_article(article: RssArticle) -> tuple[str, str, list[dict[str, s
     """
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
-
+    if not isinstance(article, RssArticle):
+        return None, None, []
     html = await download_article(link=article.link, headers=headers, timeout=60)
     if html is None:
-        return None, None, None
-
-    soup = BeautifulSoup(html, 'html.parser')
-    summary = soup.find('p').get_text()
-    body = ''
-    images = []
-    for elem in soup.select('div.article-content > *'):
-        if elem.name == 'p':
-            body += elem.get_text()
-        elif elem.name == 'img':
-            images.append(dict(src=elem['src'], alt=elem['alt'], width=elem['width'], height=elem['height']))
-    return summary, body, images
+        return None, None, []
+    try:
+        soup = BeautifulSoup(html, 'html.parser')
+        summary = soup.find('p').get_text()
+        body = ''
+        images = []
+        for elem in soup.select('div.article-content > *'):
+            if elem.name == 'p':
+                body += elem.get_text()
+            elif elem.name == 'img':
+                images.append(dict(src=elem['src'], alt=elem['alt'], width=elem['width'], height=elem['height']))
+        return summary, body, images
+    except Exception:
+        raise ErrorParsingHTMLDocument()
