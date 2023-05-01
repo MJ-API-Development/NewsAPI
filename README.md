@@ -52,3 +52,9 @@ If you have any questions or issues, please contact us at [support@eod-stock-api
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
+
+## Community
+
+- [Slack Channel](https://join.slack.com/t/eod-stock-apisite/shared_invite/zt-1uelcf229-c_6QAgWFNyVfXKZr1hYYoQ)
+- [StackOverflow](https://stackoverflowteams.com/c/eod-stock-market-api)
+- [Quora](https://eodstockmarketapi.quora.com/)
