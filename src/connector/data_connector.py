@@ -66,7 +66,7 @@ class DataConnector:
             else:
                 self._logger.info(f"There is no articles to send to the CRON API")
 
-            await asyncio.sleep(delay=90)
+            await asyncio.sleep(delay=1200)
 
     @capture_telemetry(name='send-article-to-cron')
     async def send_article_to_cron(self, article: NewsArticle):
