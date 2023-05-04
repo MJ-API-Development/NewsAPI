@@ -2,6 +2,7 @@ from typing import Coroutine
 
 import aiohttp
 
+from models import RssArticle
 from src.exceptions import RequestError
 from src.models import NewsArticle
 import asyncio
@@ -61,15 +62,16 @@ class DataConnector:
                                                              for article in self.mem_buffer if article]
                     self.mem_buffer: list = []
 
-                _ = await asyncio.gather(*create_article_tasks)
-
+                articles_not_saved = await asyncio.gather(*create_article_tasks)
+                articles_not_saved = [article for article in articles_not_saved if article is not None]
+                self.mem_buffer = articles_not_saved
             else:
                 self._logger.info(f"There is no articles to send to the CRON API")
 
             await asyncio.sleep(delay=1200)
 
     @capture_telemetry(name='send-article-to-cron')
-    async def send_article_to_cron(self, article: NewsArticle):
+    async def send_article_to_cron(self, article: RssArticle | NewsArticle) -> RssArticle | NewsArticle | None:
         """
             **send_article_to_cron**
                 send articles via http to cron jobs server
@@ -88,8 +90,8 @@ class DataConnector:
                 self._logger.error(f"Error sending article to database : {response.text}")
             except aiohttp.ClientError as e:
                 self._logger.error(f"aiohttp.ClientError caught while sending article to database : {e}")
-                raise RequestError()
-
+                return article
+            return None
 
 def create_auth_headers():
     return {
