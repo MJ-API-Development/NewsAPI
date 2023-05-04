@@ -34,7 +34,8 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[dict[str,
             if not isinstance(article, dict):
                 continue
 
-            article['thumbnail'] = article.get('thumbnail', {}).get('resolutions', []) if 'thumbnail' in article and isinstance(article['thumbnail'], dict) else []
+            article['thumbnail'] = article.get('thumbnail', {}).get('resolutions', []) \
+                if 'thumbnail' in article and isinstance(article['thumbnail'], dict) else []
             _article = RssArticle(**article)
 
             summary, body, images = await parse_article(article=_article)
