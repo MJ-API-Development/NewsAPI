@@ -5,7 +5,7 @@ from pydantic import BaseModel, BaseSettings, Field
 
 class Task(BaseModel):
     name: str
-    task_ran: bool
+    task_ran: bool = False
 
 
 def create_schedules() -> dict[str, dict[str, str | bool]]:
