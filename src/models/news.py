@@ -1,5 +1,5 @@
 from datetime import datetime
-import uuid
+import uuid as _uuid
 from pydantic import BaseModel, validator, Field
 
 
@@ -9,14 +9,15 @@ class NewsArticle(BaseModel):
     **NewsArticle**
         Used to parse YFinance Articles
     """
-    uuid: uuid.UUID
+    uuid: _uuid.UUID = Field(default_factory=lambda: _uuid.uuid4())
     title: str
-    publisher: str
+    publisher: str | None
     link: str
-    providerPublishTime: int
-    type: str
-    thumbnail: str
+    providerPublishTime: int = Field(default_factory=lambda: int(datetime.now().timestamp()))
+    type: str = Field(default='Story')
+    thumbnail: list[dict[str, str | int]] | None
     relatedTickers: list[str] = Field(default_factory=list())
+    published: str = Field(default=True)
     summary: str | None
     body: str | None
 
@@ -32,26 +33,3 @@ class NewsArticle(BaseModel):
     class Config:
         title = "YFinance Article Model"
 
-    @validator('link')
-    def check_link(cls, v):
-        """
-        **check_link**
-            ensure that the link is a valid url
-        :param v:
-        :return:
-        """
-        if not v.startswith('https'):
-            raise ValueError('Link must start with https')
-        return v
-
-    @validator('uuid')
-    def check_uuid(cls, v):
-        """
-        **check_uuid**
-            ensure that the uuid is a valid uuid
-        :param v:
-        :return:
-        """
-        if not isinstance(v, uuid.UUID):
-            raise ValueError('UUID must be a valid UUID')
-        return v

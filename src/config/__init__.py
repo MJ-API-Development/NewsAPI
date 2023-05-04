@@ -16,22 +16,21 @@ def create_schedules() -> dict[str, dict[str, str | bool]]:
     """
     tasks_schedules = {
         '00:00': Task(name='scrape_news_yahoo', task_ran=False),
-        '03:00': Task(name='scrape_news_yahoo', task_ran=False),
-        '06:00': Task(name='scrape_news_yahoo', task_ran=False),
-        '09:00': Task(name='scrape_news_yahoo', task_ran=False),
+        '04:00': Task(name='scrape_news_yahoo', task_ran=False),
+        '08:00': Task(name='scrape_news_yahoo', task_ran=False),
         '12:00': Task(name='scrape_news_yahoo', task_ran=False),
-        '15:00': Task(name='scrape_news_yahoo', task_ran=False),
-        '18:00': Task(name='scrape_news_yahoo', task_ran=False),
-        '21:00': Task(name='scrape_news_yahoo', task_ran=False),
+        '16:00': Task(name='scrape_news_yahoo', task_ran=False),
+        '20:00': Task(name='scrape_news_yahoo', task_ran=False),
+        '23:00': Task(name='scrape_news_yahoo', task_ran=False),
 
-        '01:30': Task(name='alternate_news_sources', task_ran=False),
-        '04:30': Task(name='alternate_news_sources', task_ran=False),
-        '07:30': Task(name='alternate_news_sources', task_ran=False),
-        '10:30': Task(name='alternate_news_sources', task_ran=False),
-        '13:30': Task(name='alternate_news_sources', task_ran=False),
-        '16:30': Task(name='alternate_news_sources', task_ran=False),
-        '19:30': Task(name='alternate_news_sources', task_ran=False),
-        '22:30': Task(name='alternate_news_sources', task_ran=False)
+        # '01:30': Task(name='alternate_news_sources', task_ran=False),
+        # '04:30': Task(name='alternate_news_sources', task_ran=False),
+        # '07:30': Task(name='alternate_news_sources', task_ran=False),
+        # '10:30': Task(name='alternate_news_sources', task_ran=False),
+        # '13:30': Task(name='alternate_news_sources', task_ran=False),
+        # '16:30': Task(name='alternate_news_sources', task_ran=False),
+        # '19:30': Task(name='alternate_news_sources', task_ran=False),
+        # '22:30': Task(name='alternate_news_sources', task_ran=False)
     }
     return tasks_schedules
 

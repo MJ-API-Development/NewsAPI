@@ -15,32 +15,23 @@ class RssArticle(BaseModel):
     title: str
     publisher: str | None
     link: str
+    providerPublishTime: int = Field(default_factory=lambda: int(datetime.now().timestamp()))
+    type: str = Field(default='Story')
+    thumbnail: list[dict[str, str | int]] | None
+    relatedTickers: list[str] = Field(default_factory=list())
+    published: str = Field(default=True)
     summary: str | None
     body: str | None
-    thumbnail: list[dict[str, str | int]] | None
-    published: str = Field(default=False)
-    providerPublishTime: int = Field(default_factory=lambda: int(datetime.now().timestamp()))
+
+    @property
+    def publish_time(self) -> datetime:
+        """
+            **publish_time**
+                publish_time time the article was published
+        :return:
+        """
+        return datetime.fromtimestamp(self.providerPublishTime)
 
     class Config:
         title = "Google RSS Article Model"
-
-    @validator('published')
-    def published_validator(cls, v):
-        """
-        **published_validator**
-            published validator
-        :param v:
-        :return:
-        """
-        return v if v else int(datetime.now().timestamp())
-
-    @validator('link')
-    def link_validator(cls, v):
-        """
-        **link_validator**
-            ensure that the link is a valid url
-        :param v:
-        :return:
-        """
-        return v if v.startswith('https') else 'https://' + v
 

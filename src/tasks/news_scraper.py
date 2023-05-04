@@ -6,7 +6,7 @@ import yfinance as yf
 from bs4 import BeautifulSoup
 
 from src.exceptions import ErrorParsingHTMLDocument
-from src.models import RssArticle
+from src.models import RssArticle, NewsArticle
 from src.tasks.rss_feeds import parse_feeds
 from src.tasks import download_article, request_session
 from src.telemetry import capture_telemetry
@@ -30,7 +30,7 @@ async def switch_headers() -> dict[str, str]:
 
 
 @capture_telemetry(name='scrape_news_yahoo')
-async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[dict[str, str]]]]:
+async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, NewsArticle]]:
     """
     **scrape_news_yahoo**
     Scrapes financial articles from Yahoo Finance.
@@ -53,22 +53,12 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[dict[str,
 
             article['thumbnail'] = article.get('thumbnail', {}).get('resolutions', []) \
                 if 'thumbnail' in article and isinstance(article['thumbnail'], dict) else []
-            _article = RssArticle(**article)
+            _article = NewsArticle(**article)
 
-            summary, body, images = await parse_article(article=_article)
-
-            articles.append(dict(
-                uuid=article.get('uuid'),
-                title=article.get('title'),
-                publisher=article.get('publisher'),
-                link=article.get('link'),
-                providerPublishTime=article.get('providerPublishTime'),
-                type=article.get('type'),
-                thumbnail=article.get('thumbnail'),
-                relatedTickers=article.get('relatedTickers'),
-                summary=summary,
-                body=body
-            ))
+            title, summary, body, images = await parse_article(article=_article)
+            _article.summary = summary
+            _article.body = body
+            articles.append(_article)
         news.append({ticker: articles})
 
     return news
@@ -76,16 +66,17 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[dict[str,
 
 # noinspection PyUnusedLocal
 @capture_telemetry(name='alternate_news_sources')
-async def alternate_news_sources(*args, **kwargs) -> list[dict[str, list[dict[str, str]]]]:
+async def alternate_news_sources(*args, **kwargs) -> list[dict[str, RssArticle]]:
     """
         **alternate_news_sources**
             search for news from alternate sources
     :return:
     """
     articles_list: list[RssArticle] = await parse_feeds()
+    news = []
     for i, article in enumerate(articles_list):
         try:
-            summary, body, images = await parse_article(article)
+            title, summary, body, images = await parse_article(article)
         except TypeError:
             raise ErrorParsingHTMLDocument()
         # NOTE - probably nothing to lose sleep over, but if an article does not
@@ -93,17 +84,20 @@ async def alternate_news_sources(*args, **kwargs) -> list[dict[str, list[dict[st
         if not all([summary, body, images]):
             continue
 
+        _related_tickers = await find_related_tickers(article)
         article.body = body
         article.summary = summary
-        # article.thumbnail = images
-
+        article.thumbnail = images
+        article.title = title
+        article.relatedTickers = _related_tickers
         articles_list[i] = article
-        print(article)
-    return articles_list
+
+    news.append({'alt': articles_list})
+    return news
 
 
 @capture_telemetry(name='parse_article')
-async def parse_article(article: RssArticle) -> tuple[str, str, list[dict[str, str | int]]]:
+async def parse_article(article: RssArticle) -> tuple[str, str, str, list[dict[str, str | int]]]:
     """**parse_article**
     will parse articles from yfinance
     """
@@ -116,14 +110,28 @@ async def parse_article(article: RssArticle) -> tuple[str, str, list[dict[str, s
         return None, None, []
     try:
         soup = BeautifulSoup(html, 'html.parser')
-        summary = soup.find('p').get_text()
-        body = ''
-        images = []
+        title: str = soup.find('h1').get_text()
+        summary: str = soup.find('p').get_text()
+        body: str = ''
+        images: list[dict[str, str | int]] = []
         for elem in soup.select('div.article-content > *'):
+            if elem.name == 'h1':
+                title = elem.get_text()
             if elem.name == 'p':
                 body += elem.get_text()
             elif elem.name == 'img':
                 images.append(dict(src=elem['src'], alt=elem['alt'], width=elem['width'], height=elem['height']))
-        return summary, body, images
+        return title, summary, body, images
     except Exception:
         raise ErrorParsingHTMLDocument()
+
+
+async def find_related_tickers(article: RssArticle) -> list[str]:
+    """
+        **find_related_tickers**
+            from the body of the article try learning what tickers could be related to the article
+    :param article:
+    :return:
+    """
+
+    return []
