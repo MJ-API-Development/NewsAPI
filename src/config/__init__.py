@@ -1,5 +1,4 @@
 from functools import lru_cache
-
 from pydantic import BaseModel, BaseSettings, Field
 
 
@@ -92,6 +91,8 @@ class GatewaySettings(BaseSettings):
 
 
 class APPSettings(BaseSettings):
+    """APP Confi settings"""
+    APP_NAME: str = Field(default="Financial-News-Parser")
     TITLE: str = Field(default="Financial News API - Article Scrapper Micro Service")
     DESCRIPTION: str = Field(default="Financial News API Scrapper")
     VERSION: str = Field(default="1.0.0")
@@ -107,7 +108,10 @@ class APPSettings(BaseSettings):
 
 
 class ConfigInstance(BaseSettings):
-    APP_NAME: str = Field(default="Financial-News-Parser")
+    """
+    **ConfigInstance**
+        Main Config Settings
+    """
     EOD_STOCK_API_KEY: str = Field(..., env='EOD_STOCK_API_KEY')
     DEVELOPMENT_SERVER_NAME: str = Field(..., env='DEVELOPMENT_SERVER_NAME')
     DATABASE_SETTINGS: DatabaseSettings = DatabaseSettings()
