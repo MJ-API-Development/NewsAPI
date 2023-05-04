@@ -38,7 +38,6 @@ tasks_lookup = {
 
 data_sink: DataConnector = DataConnector()
 
-# TODO find a way to gather telemetry
 telemetry: list[Telemetry] = []
 
 
