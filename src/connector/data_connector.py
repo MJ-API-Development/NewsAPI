@@ -93,6 +93,7 @@ class DataConnector:
                 return article
             return None
 
+
 def create_auth_headers():
     return {
         'Accept': 'application/json',

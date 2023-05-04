@@ -1,3 +1,5 @@
+import random
+
 import pandas as pd
 
 import yfinance as yf
@@ -10,7 +12,21 @@ from src.tasks import download_article, request_session
 from src.telemetry import capture_telemetry
 from src.utils.my_logger import init_logger
 
-news_scrapper_logger = init_logger()
+news_scrapper_logger = init_logger('news-scrapper-logger')
+
+
+async def switch_headers() -> dict[str, str]:
+    """
+        this method is used to select a random header to use in parsing news
+    :return:
+    """
+    _list_of_headers: list[dict[str, str]] = [
+        {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'},
+        {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
+    ]
+    return random.choice(_list_of_headers)
 
 
 @capture_telemetry(name='scrape_news_yahoo')
@@ -23,8 +39,9 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[dict[str,
     :return: A list of dictionaries containing ticker symbols as keys and a list of articles as values.
     """
     news = []
-    request_session.headers.update({
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'})
+    _headers: dict[str, str] = await switch_headers()
+    request_session.headers.update(_headers)
+
     for ticker in tickers:
         ticker = yf.Ticker(ticker=ticker.upper(), session=request_session)
         news_df = pd.DataFrame(ticker.news)
@@ -90,10 +107,10 @@ async def parse_article(article: RssArticle) -> tuple[str, str, list[dict[str, s
     """**parse_article**
     will parse articles from yfinance
     """
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
+    headers = await switch_headers()
     if not isinstance(article, RssArticle):
         return None, None, []
+    # TODO learn how to use proxy on the downloader
     html = await download_article(link=article.link, headers=headers, timeout=60)
     if html is None:
         return None, None, []
