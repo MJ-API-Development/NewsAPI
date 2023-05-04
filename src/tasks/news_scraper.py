@@ -31,8 +31,8 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[dict[str,
         articles = []
         for i in range(len(news_df)):
             article = news_df.iloc[i]
-
-            summary, body, images = await parse_article(article.get('link'))
+            _article = RssArticle(**article)
+            summary, body, images = await parse_article(article=_article)
 
             articles.append(dict(
                 uuid=article.get('uuid'),
