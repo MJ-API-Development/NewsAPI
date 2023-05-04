@@ -63,7 +63,7 @@ async def scheduled_task() -> None:
                 print(f"Running {task_details.name} task at {current_time}")
 
                 articles = await tasks_lookup[task_details.name](tickers_list)
-                scheduler_settings.schedule_times[schedule_time].task_ran = True
+                scheduler_settings.schedule_times[schedule_time] = task_details.task_ran
                 # this will store the article to whatever storage data_sink is storing in
                 asyncio.create_task(data_sink.incoming_articles(article_list=articles))
                 continue
@@ -75,7 +75,9 @@ async def scheduled_task() -> None:
             # will refresh meme tickers every hour
             meme_tickers = await get_meme_tickers()
             can_refresh_count = 0
+
         if _run_counter == len(scheduler_settings.schedule_times.items()):
+            # once the scheduler is exhausted this will create a new schedule for the day
             scheduler_settings.schedule_times = create_schedules()
             _run_counter = 0
         _run_counter += 1
