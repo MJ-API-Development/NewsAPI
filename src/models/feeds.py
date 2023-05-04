@@ -19,7 +19,7 @@ class RssArticle(BaseModel):
     type: str = Field(default='Story')
     thumbnail: list[dict[str, str | int]] | None
     relatedTickers: list[str] = Field(default_factory=list())
-    published: str = Field(default=True)
+
     summary: str | None
     body: str | None
 

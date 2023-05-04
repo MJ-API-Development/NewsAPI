@@ -82,9 +82,28 @@ class RSSFeedSettings(BaseSettings):
         env_file_encoding = 'utf-8'
 
 
-class GatewaySettings:
+class GatewaySettings(BaseSettings):
     EXCHANGES_ENDPOINT: str = Field(..., env="EXCHANGES_ENDPOINT")
     EXCHANGE_STOCK_ENDPOINT: str = Field(..., env="EXCHANGE_STOCK_ENDPOINT")
+
+    class Config:
+        env_file = '.env.development'
+        env_file_encoding = 'utf-8'
+
+
+class APPSettings(BaseSettings):
+    TITLE: str = "Financial News API - Article Scrapper Micro Service",
+    DESCRIPTION: str = "Financial News API Scrapper",
+    VERSION: str = "1.0.0",
+    TERMS: str = "https://eod-stock-api.site/terms",
+    CONTACT_NAME: str = "MJ API Development"
+    CONTACT_URL: str = "https://eod-stock-api.site/contact"
+    CONTACT_EMAIL: str = "info@eod-stock-api.site"
+    LICENSE_NAME: str = "Apache 2.0"
+    LICENSE_URL: str = "https://www.apache.org/licenses/LICENSE-2.0.html"
+    DOCS_URL: str = '/docs'
+    OPENAPI_URL: str = '/openapi',
+    REDOC_URL: str = '/redoc'
 
     class Config:
         env_file = '.env.development'
@@ -102,6 +121,7 @@ class ConfigInstance(BaseSettings):
     CRON_ENDPOINT: str = Field(default="CRON_ENDPOINT")
     MEME_TICKERS_URI: str = Field(..., env="MEME_TICKERS_URI")
     GATEWAY_API: GatewaySettings = GatewaySettings()
+    APP_SETTINGS: APPSettings = APPSettings()
 
     class Config:
         env_file = '.env.development'

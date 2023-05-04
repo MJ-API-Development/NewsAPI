@@ -1,34 +1,34 @@
-import datetime
 import asyncio
+
 from fastapi import FastAPI
 
 from src.api_routes.admin import admin_router
 from src.api_routes.telemetry import telemetry_router
-from src.config import scheduler_settings, create_schedules
-from src.tasks.news_scraper import scrape_news_yahoo, alternate_news_sources
-from src.tasks import can_run_task, get_meme_tickers
+from src.config import scheduler_settings, create_schedules, config_instance
 from src.connector.data_connector import DataConnector
+from src.tasks import can_run_task, get_meme_tickers
+from src.tasks.news_scraper import scrape_news_yahoo, alternate_news_sources
 from src.telemetry import Telemetry
 
-description = """Financial News API Scrapper"""
 
+settings = config_instance().APP_SETTINGS
 app = FastAPI(
-    title="Financial News API - Article Scrapper Micro Service",
-    description=description,
-    version="1.0.0",
-    terms_of_service="https://eod-stock-api.site/terms",
+    title=settings.TITLE,
+    description=settings.DESCRIPTION,
+    version=settings.VERSION,
+    terms_of_service=settings.TERMS,
     contact={
-        "name": "MJ API Development",
-        "url": "https://eod-stock-api.site/contact",
-        "email": "info@eod-stock-api.site"
+        "name": settings.CONTACT_NAME,
+        "url": settings.CONTACT_URL,
+        "email": settings.CONTACT_EMAIL
     },
     license_info={
-        "name": "Apache 2.0",
-        "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
+        "name": settings.LICENSE_NAME,
+        "url": settings.LICENSE_URL,
     },
-    docs_url='/docs',
-    openapi_url='/openapi',
-    redoc_url='/redoc'
+    docs_url=settings.DOCS_URL,
+    openapi_url=settings.OPENAPI_URL,
+    redoc_url=settings.REDOC_URL
 )
 
 tasks_lookup = {
@@ -54,7 +54,6 @@ async def scheduled_task() -> None:
     _run_counter: int = 0
     while True:
         # Check if it's time to run the task
-        current_time = datetime.datetime.now().strftime("%H:%M")
         tickers_list: list[str] = list({ticker for ticker in meme_tickers.keys()})
         can_refresh_count += 1
 
