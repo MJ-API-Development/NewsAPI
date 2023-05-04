@@ -92,22 +92,18 @@ class GatewaySettings(BaseSettings):
 
 
 class APPSettings(BaseSettings):
-    TITLE: str = "Financial News API - Article Scrapper Micro Service",
-    DESCRIPTION: str = "Financial News API Scrapper",
-    VERSION: str = "1.0.0",
-    TERMS: str = "https://eod-stock-api.site/terms",
-    CONTACT_NAME: str = "MJ API Development"
-    CONTACT_URL: str = "https://eod-stock-api.site/contact"
-    CONTACT_EMAIL: str = "info@eod-stock-api.site"
-    LICENSE_NAME: str = "Apache 2.0"
-    LICENSE_URL: str = "https://www.apache.org/licenses/LICENSE-2.0.html"
-    DOCS_URL: str = '/docs'
-    OPENAPI_URL: str = '/openapi',
-    REDOC_URL: str = '/redoc'
-
-    class Config:
-        env_file = '.env.development'
-        env_file_encoding = 'utf-8'
+    TITLE: str = Field(default="Financial News API - Article Scrapper Micro Service")
+    DESCRIPTION: str = Field(default="Financial News API Scrapper")
+    VERSION: str = Field(default="1.0.0")
+    TERMS: str = Field(default="https://eod-stock-api.site/terms")
+    CONTACT_NAME: str = Field(default="MJ API Development")
+    CONTACT_URL: str = Field(default="https://eod-stock-api.site/contact")
+    CONTACT_EMAIL: str = Field(default="info@eod-stock-api.site")
+    LICENSE_NAME: str = Field(default="Apache 2.0")
+    LICENSE_URL: str = Field(default="https://www.apache.org/licenses/LICENSE-2.0.html")
+    DOCS_URL: str = Field(default='/docs')
+    OPENAPI_URL: str = Field(default='/openapi')
+    REDOC_URL: str = Field(default='/redoc')
 
 
 class ConfigInstance(BaseSettings):
