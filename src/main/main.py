@@ -49,8 +49,9 @@ async def scheduled_task() -> None:
     :return:
     """
     meme_tickers: dict[str, str] = await get_meme_tickers()
-    can_refresh_count = 0
-    _run_counter = 0
+    # this counter helps refresh the meme tickers every hour - its based on the wait time not run time
+    can_refresh_count: int = 0
+    _run_counter: int = 0
     while True:
         # Check if it's time to run the task
         current_time = datetime.datetime.now().strftime("%H:%M")

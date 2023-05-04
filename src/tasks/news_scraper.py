@@ -30,8 +30,13 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[dict[str,
         news_df = pd.DataFrame(ticker.news)
         articles = []
         for i in range(len(news_df)):
-            article = news_df.iloc[i]
+            article = dict(news_df.iloc[i])
+            if not isinstance(article, dict):
+                continue
+
+            article['thumbnail'] = article.get('thumbnail', {}).get('resolutions', []) if 'thumbnail' in article and isinstance(article['thumbnail'], dict) else []
             _article = RssArticle(**article)
+
             summary, body, images = await parse_article(article=_article)
 
             articles.append(dict(
@@ -72,10 +77,10 @@ async def alternate_news_sources(*args, **kwargs) -> list[dict[str, list[dict[st
 
         article.body = body
         article.summary = summary
-        article.thumbnail = images
+        # article.thumbnail = images
 
         articles_list[i] = article
-
+        print(article)
     return articles_list
 
 

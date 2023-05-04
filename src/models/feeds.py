@@ -43,3 +43,4 @@ class RssArticle(BaseModel):
         :return:
         """
         return v if v.startswith('https') else 'https://' + v
+
