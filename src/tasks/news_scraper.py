@@ -44,10 +44,9 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, NewsArticle]]:
 
     for ticker in tickers:
         ticker = yf.Ticker(ticker=ticker.upper(), session=request_session)
-        news_df = pd.DataFrame(ticker.news)
+        news_data_list = dict(ticker.news)
         articles = []
-        for i in range(len(news_df)):
-            article = dict(news_df.iloc[i])
+        for article in news_data_list:
             if not isinstance(article, dict):
                 continue
 

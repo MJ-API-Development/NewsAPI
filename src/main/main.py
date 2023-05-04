@@ -61,8 +61,6 @@ async def scheduled_task() -> None:
         for schedule_time, task_details in list(scheduler_settings.schedule_times.items()):
             if await can_run_task(schedule_time=schedule_time, task_details=task_details):
                 # Run the task
-                print(f"Running {task_details.name} task at {current_time}")
-
                 articles = await tasks_lookup[task_details.name](tickers_list)
                 scheduler_settings.schedule_times[schedule_time] = task_details.task_ran
                 # this will store the article to whatever storage data_sink is storing in
