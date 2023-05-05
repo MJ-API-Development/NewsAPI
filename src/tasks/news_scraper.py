@@ -47,14 +47,13 @@ async def switch_headers() -> dict[str, str]:
         }
     ])
     selected_header.update(
-    {
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Referer': 'https://www.google.com',
-        'Connection': 'keep-alive',
-        'Cache-Control': 'max-age=0',
-        'Accept': 'text/html,application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-    })
+        {
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Referer': 'https://www.google.com',
+            'Connection': 'keep-alive',
+            'Cache-Control': 'max-age=0',
+            'Accept': '*/*'})
     return selected_header
 
 
