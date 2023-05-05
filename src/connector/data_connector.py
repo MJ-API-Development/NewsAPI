@@ -3,7 +3,7 @@ from typing import Coroutine
 
 import aiohttp
 
-from models import RssArticle
+from src.models import RssArticle
 from src.config import config_instance
 from src.models import NewsArticle
 from src.telemetry import capture_telemetry
