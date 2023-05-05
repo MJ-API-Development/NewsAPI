@@ -17,7 +17,7 @@ async def switch_headers() -> dict[str, str]:
         this method is used to select a random header to use in parsing news
     :return:
     """
-    return random.choice([
+    selected_header = random.choice([
         {
             'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
         },
@@ -46,6 +46,16 @@ async def switch_headers() -> dict[str, str]:
             'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; AS; rv:11.0) like Gecko'
         }
     ])
+    selected_header.update(
+    {
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Referer': 'https://www.google.com',
+        'Connection': 'keep-alive',
+        'Cache-Control': 'max-age=0',
+        'Accept': 'text/html,application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    })
+    return selected_header
 
 
 @capture_telemetry(name='scrape_news_yahoo')
