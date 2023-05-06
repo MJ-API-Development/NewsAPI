@@ -18,6 +18,9 @@ from datetime import datetime, timedelta, time
 
 from src.telemetry import capture_telemetry
 from src.utils.my_logger import init_logger
+from src.tasks.utils import switch_headers
+from src.tasks.utils import cloud_flare_proxy
+
 
 tasks_logger = init_logger('tasks-logger')
 
@@ -133,6 +136,7 @@ async def download_article(link: str, timeout: int, headers: dict[str, str]) -> 
         then store the results in news_sentiment.article
     """
     try:
+
         async with aiohttp.ClientSession(headers=headers) as session:
             async with session.get(url=link, timeout=timeout) as response:
                 response.raise_for_status()
@@ -182,8 +186,7 @@ async def get_meme_tickers(count: int = 100, offset: int = 0) -> dict[str, str]:
     :return: A dictionary of ticker symbols and company names for Mexican stocks.
     """
     url = f"{config_instance().MEME_TICKERS_URI}?count={count}&offset={offset}"
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (HTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
+    headers = await switch_headers()
     try:
         request_session.headers = headers
         response = request_session.get(url)

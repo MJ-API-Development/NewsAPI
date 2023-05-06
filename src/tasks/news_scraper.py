@@ -8,53 +8,9 @@ from src.tasks.rss_feeds import parse_feeds
 from src.tasks import download_article, request_session
 from src.telemetry import capture_telemetry
 from src.utils.my_logger import init_logger
+from src.tasks.utils import switch_headers
 
 news_scrapper_logger = init_logger('news-scrapper-logger')
-
-
-async def switch_headers() -> dict[str, str]:
-    """
-        this method is used to select a random header to use in parsing news
-    :return:
-    """
-    selected_header = random.choice([
-        {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
-        },
-        {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko'
-        },
-        {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:55.0) Gecko/20100101 Firefox/55.0'
-        },
-        {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
-        },
-        {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/40.15063.0.0'
-        },
-        {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:54.0) Gecko/20100101 Firefox/54.0'
-        },
-        {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; AS; rv:11.0) like Gecko'
-        },
-        {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
-        },
-        {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; AS; rv:11.0) like Gecko'
-        }
-    ])
-    selected_header.update(
-        {
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Referer': 'https://www.google.com',
-            'Connection': 'keep-alive',
-            'Cache-Control': 'max-age=0',
-            'Accept': '*/*'})
-    return selected_header
 
 
 @capture_telemetry(name='scrape_news_yahoo')
@@ -83,8 +39,17 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, NewsArticle]]:
             _article = NewsArticle(**article)
 
             title, summary, body, images = await parse_article(article=_article)
-            _article.summary = summary
-            _article.body = body
+
+            # _res = [title, summary, body, images]
+            if "not supported on your current browser version" not in summary:
+                _article.summary = summary
+            else:
+                news_scrapper_logger.info(_headers.get('User-Agent'))
+            if "not supported on your current browser version" not in body:
+                _article.body = body
+            else:
+                news_scrapper_logger.info(_headers.get('User-Agent'))
+
             articles.append(_article)
         news.append({ticker: articles})
 
@@ -129,12 +94,12 @@ async def parse_article(article: RssArticle) -> tuple[str, str, str, list[dict[s
     will parse articles from yfinance
     """
     headers = await switch_headers()
-    if not isinstance(article, RssArticle):
-        return None, None, []
-    # TODO learn how to use proxy on the downloader
+    if not article:
+        return None, None, None, []
+
     html = await download_article(link=article.link, headers=headers, timeout=60)
     if html is None:
-        return None, None, []
+        return None, None, None, []
     try:
         soup = BeautifulSoup(html, 'html.parser')
         title: str = soup.find('h1').get_text()

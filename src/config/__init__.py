@@ -107,6 +107,16 @@ class APPSettings(BaseSettings):
     REDOC_URL: str = Field(default='/redoc')
 
 
+class CloudflareSettings(BaseSettings):
+    CLOUDFLARE_ZONE_ID: str = Field(..., env="CLOUDFLARE_ZONE_ID")
+    CLOUD_FLARE_API_KEY: str = Field(..., env="CLOUD_FLARE_API_KEY")
+    CLOUD_FLARE_EMAIL: str = Field(..., env="CLOUD_FLARE_EMAIL")
+
+    class Config:
+        env_file = '.env.development'
+        env_file_encoding = 'utf-8'
+
+
 class ConfigInstance(BaseSettings):
     """
     **ConfigInstance**
@@ -122,6 +132,7 @@ class ConfigInstance(BaseSettings):
     MEME_TICKERS_URI: str = Field(..., env="MEME_TICKERS_URI")
     GATEWAY_API: GatewaySettings = GatewaySettings()
     APP_SETTINGS: APPSettings = APPSettings()
+    CLOUDFLARE_SETTINGS: CloudflareSettings = CloudflareSettings()
 
     class Config:
         env_file = '.env.development'
