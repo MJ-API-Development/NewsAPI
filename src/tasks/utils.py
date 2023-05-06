@@ -45,7 +45,10 @@ async def switch_headers() -> dict[str, str]:
 
 class CloudflareProxy:
     """
+    **CloudflareProxy**
         used to make requests with cloudflare api
+            - this Uses CloudFlare Edge as Forward Proxy Servers
+        tracks if there are too many errors and stops making requests through cloudflare
     """
 
     def __init__(self):
