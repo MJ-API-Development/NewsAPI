@@ -1,7 +1,8 @@
-import random
 import asyncio
+import random
+
 import aiohttp
-import requests
+
 from src.config import config_instance
 from src.telemetry import capture_telemetry
 
