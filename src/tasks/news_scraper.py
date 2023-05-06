@@ -1,3 +1,4 @@
+import asyncio
 import random
 import yfinance as yf
 from bs4 import BeautifulSoup
@@ -24,31 +25,33 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, NewsArticle]]:
     """
     news = []
     _headers: dict[str, str] = await switch_headers()
+    articles_tickers_tasks = [ticker_articles(_headers=_headers, ticker=ticker) for ticker in tickers]
+    articles_tickers = await asyncio.gather(*articles_tickers_tasks)
+    return [{ticker: article} for article, ticker in articles_tickers]
 
-    for ticker in tickers:
-        request_session.headers.update(_headers)
-        ticker = yf.Ticker(ticker=ticker.upper(), session=request_session)
-        news_data_list: list[dict[str, str | int | list[dict[str, str | int]]]] = ticker.news
-        articles = []
-        for article in news_data_list:
-            if not isinstance(article, dict):
-                continue
 
-            article['thumbnail'] = article.get('thumbnail', {}).get('resolutions', []) \
-                if 'thumbnail' in article and isinstance(article['thumbnail'], dict) else []
-            _article = NewsArticle(**article)
+async def ticker_articles(_headers: dict[str, str], ticker: str) -> tuple[NewsArticle, str]:
+    request_session.headers.update(_headers)
+    ticker = yf.Ticker(ticker=ticker.upper(), session=request_session)
+    news_data_list: list[dict[str, str | int | list[dict[str, str | int]]]] = ticker.news
+    articles = []
+    for article in news_data_list:
+        if not isinstance(article, dict):
+            continue
 
-            title, summary, body, images = await parse_article(article=_article)
-            # _res = [title, summary, body, images]
-            if "not supported on your current browser version" not in summary:
-                _article.summary = summary
-            if "not supported on your current browser version" not in body:
-                _article.body = body
+        article['thumbnail'] = article.get('thumbnail', {}).get('resolutions', []) \
+            if 'thumbnail' in article and isinstance(article['thumbnail'], dict) else []
+        _article: NewsArticle = NewsArticle(**article)
 
-            articles.append(_article)
-        news.append({ticker: articles})
+        title, summary, body, images = await parse_article(article=_article)
+        # _res = [title, summary, body, images]
+        if "not supported on your current browser version" not in summary:
+            _article.summary = summary
+        if "not supported on your current browser version" not in body:
+            _article.body = body
 
-    return news
+        articles.append(_article)
+    return articles, ticker
 
 
 # noinspection PyUnusedLocal
