@@ -1,15 +1,15 @@
 import asyncio
-import random
+
 import yfinance as yf
 from bs4 import BeautifulSoup
 
 from src.exceptions import ErrorParsingHTMLDocument
 from src.models import RssArticle, NewsArticle
+from src.tasks import request_session, download_article
 from src.tasks.rss_feeds import parse_feeds
-from src.tasks import download_article, request_session
+from src.tasks.utils import switch_headers, cloud_flare_proxy
 from src.telemetry import capture_telemetry
 from src.utils.my_logger import init_logger
-from src.tasks.utils import switch_headers, cloud_flare_proxy
 
 news_scrapper_logger = init_logger('news-scrapper-logger')
 
@@ -23,18 +23,25 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, NewsArticle]]:
     :param tickers: A list of stock tickers to scrape news articles for.
     :return: A list of dictionaries containing ticker symbols as keys and a list of articles as values.
     """
-    news = []
-    _headers: dict[str, str] = await switch_headers()
-    articles_tickers_tasks = [ticker_articles(_headers=_headers, ticker=ticker) for ticker in tickers]
+    articles_tickers_tasks = [ticker_articles(ticker=ticker) for ticker in tickers]
     articles_tickers = await asyncio.gather(*articles_tickers_tasks)
     return [{ticker: article} for article, ticker in articles_tickers]
 
 
-async def ticker_articles(_headers: dict[str, str], ticker: str) -> tuple[NewsArticle, str]:
+async def ticker_articles(ticker: str) -> tuple[NewsArticle, str]:
+    """
+        **ticker_articles**
+            will return a list of articles for a single ticker
+    :param ticker:
+    :return:
+    """
+    _headers: dict[str, str] = await switch_headers()
     request_session.headers.update(_headers)
     ticker = yf.Ticker(ticker=ticker.upper(), session=request_session)
     news_data_list: list[dict[str, str | int | list[dict[str, str | int]]]] = ticker.news
     articles = []
+    # resetting error count to 0
+    cloud_flare_proxy.error_count = 0
     for article in news_data_list:
         if not isinstance(article, dict):
             continue
@@ -94,8 +101,9 @@ async def parse_article(article: RssArticle) -> tuple[str, str, str, list[dict[s
     if not article:
         return None, None, None, []
 
-    html = await cloud_flare_proxy.make_request_with_cloudflare(url=article.link, method="GET")
-
+    _html = await cloud_flare_proxy.make_request_with_cloudflare(url=article.link, method="GET")
+    _headers = await switch_headers()
+    html = _html if _html is not None else await download_article(link=article.link, timeout=9600, headers=_headers)
     if html is None:
         return None, None, None, []
     try:

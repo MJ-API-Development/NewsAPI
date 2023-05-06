@@ -3,6 +3,7 @@ import asyncio
 import aiohttp
 import requests
 from src.config import config_instance
+from src.telemetry import capture_telemetry
 
 
 async def switch_headers() -> dict[str, str]:
@@ -54,42 +55,37 @@ class CloudflareProxy:
         self.zone_id = config_instance().CLOUDFLARE_SETTINGS.CLOUDFLARE_ZONE_ID
         self.worker_name = "proxytask"
 
+        self.error_count = 0
+        self.error_thresh_hold = 60
+
     async def create_request_endpoint(self) -> str:
         return f"{self.api_endpoint}/zones/{self.zone_id}/workers/scripts/{self.worker_name}/fetch"
 
-    async def _make_request_with_cloudflare(self, url: str, method: str):
+    @capture_telemetry(name='make_request_with_cloudflare')
+    async def make_request_with_cloudflare(self, url: str, method: str):
         """
-
+            **make_request_with_cloudflare**
+                will redirect requests through the cloudflare network
         :param url:
         :param method:
         :return:
         """
-        api_endpoint: str = await self.create_request_endpoint()
-        headers = {
-            "X-Auth-Email": self.api_email,
-            "X-Auth-Key": f"{self.api_key}",
-            "Content-Type": "application/json"
-        }
-        data = {
-            "url": url,
-            "method": method
-        }
-        print(f"Making request : {url}")
-        response = requests.post(api_endpoint, headers=headers, json=data)
-        print("RESPONSE ", response.text)
-
-        return response
-
-    async def make_request_with_cloudflare(self, url: str, method: str):
         try:
             headers = await switch_headers()
-            request_url = f"{self.worker_url}?url={url}&method={method}"
+
+            if self.error_count < self.error_thresh_hold:
+                request_url = f"{self.worker_url}?url={url}&method={method}"
+            else:
+                request_url = url
+
             async with aiohttp.ClientSession(headers=headers) as session:
                 async with session.get(url=request_url, timeout=9600) as response:
                     response.raise_for_status()
                     text: str = await response.text()
                     return text
+
         except (aiohttp.ClientError, asyncio.TimeoutError):
+            self.error_count += 1
             return None
 
 
