@@ -1,4 +1,6 @@
 import random
+import asyncio
+import aiohttp
 import requests
 from src.config import config_instance
 
@@ -81,18 +83,13 @@ class CloudflareProxy:
     async def make_request_with_cloudflare(self, url: str, method: str):
         try:
             headers = await switch_headers()
-            data = {
-                "url": url,
-                "method": method
-            }
-            print(f"Making request : {url}")
             request_url = f"{self.worker_url}?url={url}&method={method}"
-            with requests.Session() as session:
-                response: requests.Response = session.get(url, data=data, headers=headers)
-                print("RESPONSE ", response.content)
-                return response
-        except Exception as e:
-            print(e)
+            async with aiohttp.ClientSession(headers=headers) as session:
+                async with session.get(url=request_url, timeout=9600) as response:
+                    response.raise_for_status()
+                    text: str = await response.text()
+                    return text
+        except (aiohttp.ClientError, asyncio.TimeoutError):
             return None
 
 

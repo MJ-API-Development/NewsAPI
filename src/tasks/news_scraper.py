@@ -8,7 +8,7 @@ from src.tasks.rss_feeds import parse_feeds
 from src.tasks import download_article, request_session
 from src.telemetry import capture_telemetry
 from src.utils.my_logger import init_logger
-from src.tasks.utils import switch_headers
+from src.tasks.utils import switch_headers, cloud_flare_proxy
 
 news_scrapper_logger = init_logger('news-scrapper-logger')
 
@@ -39,7 +39,6 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, NewsArticle]]:
             _article = NewsArticle(**article)
 
             title, summary, body, images = await parse_article(article=_article)
-
             # _res = [title, summary, body, images]
             if "not supported on your current browser version" not in summary:
                 _article.summary = summary
@@ -89,11 +88,11 @@ async def parse_article(article: RssArticle) -> tuple[str, str, str, list[dict[s
     """**parse_article**
     will parse articles from yfinance
     """
-    headers = await switch_headers()
     if not article:
         return None, None, None, []
 
-    html = await download_article(link=article.link, headers=headers, timeout=60)
+    html = await cloud_flare_proxy.make_request_with_cloudflare(url=article.link, method="GET")
+
     if html is None:
         return None, None, None, []
     try:
