@@ -124,6 +124,7 @@ async def parse_article(article: RssArticle) -> tuple[str, str, str, list[dict[s
         raise ErrorParsingHTMLDocument()
 
 
+# noinspection PyUnusedLocal
 async def find_related_tickers(article: RssArticle) -> list[str]:
     """
         **find_related_tickers**

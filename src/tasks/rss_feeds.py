@@ -20,5 +20,5 @@ async def parse_feeds() -> list[RssArticle]:
         feeds_tasks = [parse_google_feeds(rss_url=rss_url) for rss_url in rss_lists]
         feeds_list = await asyncio.gather(*feeds_tasks)
         return list(itertools.chain(*feeds_list))
-    except Exception as e:
+    except Exception:
         raise ErrorParsingFeeds()

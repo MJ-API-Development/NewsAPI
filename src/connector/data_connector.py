@@ -1,4 +1,5 @@
 import asyncio
+import pickle
 from typing import Coroutine
 
 import aiohttp
@@ -9,6 +10,17 @@ from src.models import NewsArticle
 from src.telemetry import capture_telemetry
 from src.utils import camel_to_snake
 from src.utils.my_logger import init_logger
+
+
+async def save_to_local_drive(article: NewsArticle | RssArticle):
+    """
+        **save_to_local_drive**
+            will save articles that failed to be sent to the API to local hard drive as temporary storage
+    :param article:
+    :return:
+    """
+    pickled_article = pickle.dumps(article)
+    # TODO- learn how to save pickled classes to storage - or use a package that has the functionality
 
 
 class DataConnector:
@@ -27,6 +39,13 @@ class DataConnector:
         self.create_article_endpoint: str = f'{config_instance().CRON_ENDPOINT}/api/v1/news/article'
         self.aio_session: aiohttp.ClientSession = aiohttp.ClientSession(headers=create_auth_headers())
         self._logger = init_logger(camel_to_snake(self.__class__.__name__))
+
+    def init(self):
+        """
+            prepare package and restore saved files from storage
+        :return:
+        """
+        pass
 
     async def incoming_articles(self, article_list: list[dict[str, NewsArticle | RssArticle]]):
         """
@@ -92,12 +111,16 @@ class DataConnector:
 
                     self._logger.info(f"Sent article : response : {response_data.get('payload')}")
                     return response_data
+
                 self._logger.error(f"Error sending article to database : {response.text}")
 
             except aiohttp.ClientError as e:
                 self._logger.error(f"aiohttp.ClientError caught while sending article to database : {e}")
                 # NOTE:  return this article so it gets sent again
+
+                await save_to_local_drive(article=article)
                 return article
+
             return None
 
 
