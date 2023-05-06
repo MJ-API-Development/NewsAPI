@@ -24,9 +24,9 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, NewsArticle]]:
     """
     news = []
     _headers: dict[str, str] = await switch_headers()
-    request_session.headers.update(_headers)
 
     for ticker in tickers:
+        request_session.headers.update(_headers)
         ticker = yf.Ticker(ticker=ticker.upper(), session=request_session)
         news_data_list: list[dict[str, str | int | list[dict[str, str | int]]]] = ticker.news
         articles = []
@@ -43,12 +43,8 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, NewsArticle]]:
             # _res = [title, summary, body, images]
             if "not supported on your current browser version" not in summary:
                 _article.summary = summary
-            else:
-                news_scrapper_logger.info(_headers.get('User-Agent'))
             if "not supported on your current browser version" not in body:
                 _article.body = body
-            else:
-                news_scrapper_logger.info(_headers.get('User-Agent'))
 
             articles.append(_article)
         news.append({ticker: articles})
