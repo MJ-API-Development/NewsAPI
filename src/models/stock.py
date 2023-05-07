@@ -3,6 +3,8 @@ from pydantic import BaseModel
 
 class Stock(BaseModel):
     """
+    **Stock**
+
         Stock Model , Same as the Stock Model in the database
         see StockAPI
 

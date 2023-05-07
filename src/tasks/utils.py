@@ -3,6 +3,7 @@ import random
 
 import aiohttp
 
+from src.exceptions import RequestError
 from src.config import config_instance
 from src.telemetry import capture_telemetry
 
@@ -75,7 +76,7 @@ class CloudflareProxy:
         :return:
         """
         try:
-            headers = await switch_headers()
+            headers: dict[str, str] = await switch_headers()
 
             if self.error_count < self.error_thresh_hold:
                 request_url = f"{self.worker_url}?url={url}&method={method}"
@@ -83,7 +84,7 @@ class CloudflareProxy:
                 request_url = url
 
             async with aiohttp.ClientSession(headers=headers) as session:
-                async with session.get(url=request_url, timeout=9600) as response:
+                async with session.get(url=request_url, timeout=96) as response:
                     response.raise_for_status()
                     text: str = await response.text()
                     return text
@@ -91,6 +92,8 @@ class CloudflareProxy:
         except (aiohttp.ClientError, asyncio.TimeoutError):
             self.error_count += 1
             return None
+        except Exception as e:
+            raise RequestError()
 
 
 cloud_flare_proxy = CloudflareProxy()

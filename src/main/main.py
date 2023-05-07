@@ -1,7 +1,9 @@
 import asyncio
+from typing import Callable, Coroutine, TypeAlias
 
 from fastapi import FastAPI
 
+from src.models import NewsArticle, RssArticle
 from src.api_routes.admin import admin_router
 from src.api_routes.telemetry import telemetry_router
 from src.config import scheduler_settings, create_schedules, config_instance
@@ -30,8 +32,9 @@ app = FastAPI(
     openapi_url=settings.OPENAPI_URL,
     redoc_url=settings.REDOC_URL
 )
+scraperType: TypeAlias = Coroutine[list[str], None, list[dict[str, NewsArticle | RssArticle]]]
 
-tasks_lookup = {
+tasks_lookup: dict[str, Callable[[list[str]], scraperType]] = {
     'scrape_news_yahoo': scrape_news_yahoo,
     'alternate_news_sources': alternate_news_sources,
 }
@@ -58,18 +61,25 @@ async def scheduled_task() -> None:
 
         for schedule_time, task_details in list(scheduler_settings.schedule_times.items()):
             if await can_run_task(schedule_time=schedule_time, task_details=task_details):
-                # Run the task
-                articles = await tasks_lookup[task_details.name](tickers_list)
-                scheduler_settings.schedule_times[schedule_time] = task_details.task_ran
-                # this will store the article to whatever storage data_sink is storing in
-                asyncio.create_task(data_sink.incoming_articles(article_list=articles))
+                # Select and Run task
+                articles: list[dict[str, NewsArticle | RssArticle]] = await tasks_lookup[task_details.name](tickers_list)
+
+                print(f'RETURNING: {len(articles)} Articles to storage')
+                # prepare articles and store them into a buffer for sending to backend
+                await data_sink.incoming_articles(article_list=articles)
+                # send article to storage via articles API in Stock-API
+                await data_sink.mem_store_to_storage()
+                # Mark task as completed by setting task_ran to True and then store back into scheduler
+                task_details.task_ran = True
+                scheduler_settings.schedule_times[schedule_time] = task_details
+                # exit loop
                 continue
 
-        # Sleep for 10 minute
+        # Sleep for 10 minutes
         await asyncio.sleep(600)
-        # will refresh the tickers in 3 hours - cache lasts until then
+
         if can_refresh_count == 6*3:
-            # will refresh meme tickers every hour
+            # will refresh meme tickers every 3 hours
             meme_tickers = await get_meme_tickers()
             can_refresh_count = 0
 
@@ -83,7 +93,7 @@ async def scheduled_task() -> None:
 @app.on_event("startup")
 async def startup_event():
     asyncio.create_task(scheduled_task())
-    asyncio.create_task(data_sink.mem_store_to_storage())
+    # asyncio.create_task(data_sink.mem_store_to_storage())
 
 
 ########################################################################################################################

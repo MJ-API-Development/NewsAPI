@@ -15,20 +15,19 @@ news_scrapper_logger = init_logger('news-scrapper-logger')
 
 
 @capture_telemetry(name='scrape_news_yahoo')
-async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, NewsArticle]]:
-    """
-    **scrape_news_yahoo**
-    Scrapes financial articles from Yahoo Finance.
+async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[NewsArticle | RssArticle]]]:
+    try:
+        articles_tickers_tasks: list[tuple[list[NewsArticle], str]] = [ticker_articles(ticker=ticker) for ticker in tickers]
+        news_scrapper_logger.info(f'scrape_news_yahoo tasks : {articles_tickers_tasks}')
+        articles_tickers = await asyncio.gather(*articles_tickers_tasks)
+        news_scrapper_logger.info(f'scrapped a total of {len(articles_tickers)} articles')
+        return [{ticker: articles} for articles, ticker in articles_tickers if articles]
+    except Exception as e:
+        print(f"Exception raised: {e}")
+        return []
 
-    :param tickers: A list of stock tickers to scrape news articles for.
-    :return: A list of dictionaries containing ticker symbols as keys and a list of articles as values.
-    """
-    articles_tickers_tasks = [ticker_articles(ticker=ticker) for ticker in tickers]
-    articles_tickers = await asyncio.gather(*articles_tickers_tasks)
-    return [{ticker: article} for article, ticker in articles_tickers]
 
-
-async def ticker_articles(ticker: str) -> tuple[NewsArticle, str]:
+async def ticker_articles(ticker: str) -> tuple[list[NewsArticle], str]:
     """
         **ticker_articles**
             will return a list of articles for a single ticker
@@ -37,18 +36,27 @@ async def ticker_articles(ticker: str) -> tuple[NewsArticle, str]:
     """
     _headers: dict[str, str] = await switch_headers()
     request_session.headers.update(_headers)
-    ticker = yf.Ticker(ticker=ticker.upper(), session=request_session)
-    news_data_list: list[dict[str, str | int | list[dict[str, str | int]]]] = ticker.news
+    try:
+        ticker = yf.Ticker(ticker=ticker.upper(), session=request_session)
+        news_data_list: list[dict[str, str | int | list[dict[str, str | int]]]] = ticker.news
+    except Exception as e:
+        news_scrapper_logger.info(f'ticker articles error: {str(e)}')
+        return [], ticker
     articles = []
     # resetting error count to 0
     cloud_flare_proxy.error_count = 0
     for article in news_data_list:
+
         if not isinstance(article, dict):
             continue
 
         article['thumbnail'] = article.get('thumbnail', {}).get('resolutions', []) \
             if 'thumbnail' in article and isinstance(article['thumbnail'], dict) else []
-        _article: NewsArticle = NewsArticle(**article)
+        try:
+            _article: NewsArticle = NewsArticle(**article)
+        except Exception as e:
+            news_scrapper_logger.info(f'error parsing article: {article}')
+            continue
 
         title, summary, body, images = await parse_article(article=_article)
         # _res = [title, summary, body, images]
