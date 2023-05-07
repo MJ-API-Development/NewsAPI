@@ -14,25 +14,14 @@ async def switch_headers() -> dict[str, str]:
     :return:
     """
     selected_header = random.choice([
-        {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
-        },
-        {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko'
-        },
-        {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:55.0) Gecko/20100101 Firefox/55.0'
-        },
-        {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
-        },
-        {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/40.15063.0.0'
-        },
-        {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:54.0) Gecko/20100101 Firefox/54.0'
-        }
+        {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'},
+        {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko'},
+        {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:55.0) Gecko/20100101 Firefox/55.0'},
+        {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'},
+        {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/40.15063.0.0'},
+        {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:54.0) Gecko/20100101 Firefox/54.0'}
     ])
+
     selected_header.update(
         {
             'Accept-Language': 'en-US,en;q=0.9',
@@ -42,6 +31,8 @@ async def switch_headers() -> dict[str, str]:
             'Cache-Control': 'max-age=0',
             'Accept': '*/*'})
     return selected_header
+
+cloudflare_settings = config_instance().CLOUDFLARE_SETTINGS
 
 
 class CloudflareProxy:
@@ -55,10 +46,10 @@ class CloudflareProxy:
     def __init__(self):
         self.worker_url: str = "https://proxy.eod-stock-api.site"
         self.api_endpoint: str = "https://api.cloudflare.com/client/v4"
-        self.api_key = config_instance().CLOUDFLARE_SETTINGS.CLOUD_FLARE_API_KEY
-        self.api_email = config_instance().CLOUDFLARE_SETTINGS.CLOUD_FLARE_EMAIL
-        self.zone_id = config_instance().CLOUDFLARE_SETTINGS.CLOUDFLARE_ZONE_ID
-        self.worker_name = "proxytask"
+        self.api_key = cloudflare_settings.CLOUD_FLARE_API_KEY
+        self.api_email = cloudflare_settings.CLOUD_FLARE_EMAIL
+        self.zone_id = cloudflare_settings.CLOUDFLARE_ZONE_ID
+        self.worker_name = cloudflare_settings.CLOUDFLARE_WORKER_NAME
 
         self.error_count = 0
         self.error_thresh_hold = 60

@@ -173,6 +173,16 @@ class TelemetryStream:
 
 def capture_telemetry(name: str):
     def decorator(func):
+        async def create_result():
+            results_ = {
+                "parse_article": lambda: (None, None, None, []),
+                "get_meme_tickers": lambda: {},
+                "do_soup": lambda: (None, None),
+                "parse_google_feeds": lambda: list(),
+                "make_request_with_cloudflare": lambda: None
+            }
+            return results_.get(name, None)
+
         @wraps(func)
         async def wrapper(*args, **kwargs):
             current_minute: int = int(time.time() / 60)
@@ -182,7 +192,7 @@ def capture_telemetry(name: str):
             except (ErrorParsingFeeds, ErrorParsingHTMLDocument, RequestError) as e:
                 telemetry_logger.error(str(e))
                 await telemetry_stream.capture_error(method_name=name, error_type=str(e))
-                result = None
+                result = await create_result()
             finally:
                 await telemetry_stream.capture_time_metrics(name=name, current_minute=current_minute,
                                                             start_time=start_time)
@@ -190,7 +200,9 @@ def capture_telemetry(name: str):
                 telemetry_stream.method_names.add(name)
 
             return result
+
         return wrapper
+
     return decorator
 
 

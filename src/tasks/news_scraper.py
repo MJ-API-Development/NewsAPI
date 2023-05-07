@@ -17,7 +17,8 @@ news_scrapper_logger = init_logger('news-scrapper-logger')
 @capture_telemetry(name='scrape_news_yahoo')
 async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[NewsArticle | RssArticle]]]:
     try:
-        articles_tickers_tasks: list[tuple[list[NewsArticle], str]] = [ticker_articles(ticker=ticker) for ticker in tickers]
+        articles_tickers_tasks: list[tuple[list[NewsArticle], str]] = [ticker_articles(ticker=ticker) for ticker in
+                                                                       tickers]
         news_scrapper_logger.info(f'scrape_news_yahoo tasks : {articles_tickers_tasks}')
         articles_tickers = await asyncio.gather(*articles_tickers_tasks)
         news_scrapper_logger.info(f'scrapped a total of {len(articles_tickers)} articles')
@@ -36,14 +37,18 @@ async def ticker_articles(ticker: str) -> tuple[list[NewsArticle], str]:
     """
     _headers: dict[str, str] = await switch_headers()
     request_session.headers.update(_headers)
+
+    # noinspection PyBroadException
     try:
         ticker = yf.Ticker(ticker=ticker.upper(), session=request_session)
         news_data_list: list[dict[str, str | int | list[dict[str, str | int]]]] = ticker.news
     except Exception as e:
         news_scrapper_logger.info(f'ticker articles error: {str(e)}')
         return [], ticker
+
     articles = []
-    # resetting error count to 0
+
+    # resetting error count to 0 - this means for every ticker to search the error count goes back to zero
     cloud_flare_proxy.error_count = 0
     for article in news_data_list:
 
@@ -52,15 +57,19 @@ async def ticker_articles(ticker: str) -> tuple[list[NewsArticle], str]:
 
         article['thumbnail'] = article.get('thumbnail', {}).get('resolutions', []) \
             if 'thumbnail' in article and isinstance(article['thumbnail'], dict) else []
+
+        # noinspection PyBroadException
         try:
+            # NOTE: sometimes there is a strange list error here, don't know why honestly
             _article: NewsArticle = NewsArticle(**article)
         except Exception as e:
-            news_scrapper_logger.info(f'error parsing article: {article}')
+            news_scrapper_logger.info(f'error parsing article: {str(e)}')
             continue
 
         title, summary, body, images = await parse_article(article=_article)
-        # _res = [title, summary, body, images]
-        if "not supported on your current browser version" not in summary:
+
+        # Note: funny way of catching parser errors but hey - beggars cant be choosers
+        if "not supported on your current browser version" not in summary.casefold():
             _article.summary = summary
         if "not supported on your current browser version" not in body:
             _article.body = body
@@ -102,7 +111,7 @@ async def alternate_news_sources(*args, **kwargs) -> list[dict[str, RssArticle]]
 
 
 @capture_telemetry(name='parse_article')
-async def parse_article(article: RssArticle) -> tuple[str, str, str, list[dict[str, str | int]]]:
+async def parse_article(article: RssArticle) -> tuple[str | None, str | None, str | None, list[dict[str, str | int]]]:
     """**parse_article**
     will parse articles from yfinance
     """
