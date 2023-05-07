@@ -113,17 +113,18 @@ class DataConnector:
             try:
                 response: aiohttp.ClientResponse = await session.post(url=self.create_article_endpoint,
                                                                       data=article.dict())
-                response.raise_for_status()
+                # response.raise_for_status()
                 if response.headers.get('Content-Type') == 'application/json':
-                    response_data: dict[str, str | dict[str, str]] = response.json()
+                    response_data: dict[str, str | dict[str, str]] = await response.json()
 
                     self._logger.info(f"Sent article : response : {response_data.get('payload')}")
                     return None
 
-                self._logger.error(f"Error sending article to database : {response.text}")
+                self._logger.error(f"Error sending article to database : {await response.text() }")
                 return article
 
             except aiohttp.ClientError as e:
+                self._logger.info(await response.text())
                 self._logger.error(f"ClientError caught while sending article to database : {str(e)}")
                 # NOTE:  return this article so it gets sent again
 
