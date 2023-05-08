@@ -215,7 +215,7 @@ async def get_meme_tickers(count: int = 150, offset: int = 0) -> dict[str, str]:
         if _ticker not in _present_tickers:
             tickers[_ticker] = name
             _present_tickers.add(_ticker)
-
+    tasks_logger.info(f"Total tickers found : {len(tickers)}")
     return tickers
 
 
