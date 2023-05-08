@@ -199,14 +199,24 @@ async def get_meme_tickers(count: int = 150, offset: int = 0) -> dict[str, str]:
         tickers[symbol] = name
 
     tasks_logger.info(tickers)
+    _present_tickers = set(tickers.keys())
+
+    for _ticker, name in list(get_meme_tickers_us().items()):
+        if _ticker not in _present_tickers:
+            tickers[_ticker] = name
+
+    for _ticker, name in list(get_meme_tickers_canada().items()):
+        if _ticker not in _present_tickers:
+            tickers[_ticker] = name
+
+    for _ticker, name in list(get_meme_tickers_brazil().items()):
+        if _ticker not in _present_tickers:
+            tickers[_ticker] = name
 
     return tickers
 
 
-
-
-
-async def get_meme_tickers_us() -> dict[str, str]:
+def get_meme_tickers_us() -> dict[str, str]:
     """
     :return:
     """
@@ -262,7 +272,7 @@ async def get_meme_tickers_us() -> dict[str, str]:
     }
 
 
-async def get_meme_tickers_canada():
+def get_meme_tickers_canada():
     """
     :return:
     """
@@ -320,7 +330,7 @@ async def get_meme_tickers_canada():
     return canadian_stocks
 
 
-async def get_meme_tickers_brazil() -> dict[str, str]:
+def get_meme_tickers_brazil() -> dict[str, str]:
     """
 
     :return:
