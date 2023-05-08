@@ -172,7 +172,7 @@ async def can_run_task(schedule_time: str, task_details) -> bool:
     time_diff: int = abs(schedule_time.hour - current_time.hour) * 60 + abs(schedule_time.minute - current_time.minute)
     tasks_logger.info(f"testing if we can run task : {time_diff}")
     # Check if the time difference is less than or equal to 10 minutes and the task has not already run
-    return time_diff <= 10*60 and not task_details.task_ran
+    return time_diff <= 15 and not task_details.task_ran
 
 
 @capture_telemetry(name='get_meme_tickers')
