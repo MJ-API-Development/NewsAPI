@@ -69,9 +69,9 @@ async def scheduled_task() -> None:
                 # Mark task as completed by setting task_ran to True and then store back into scheduler
                 task_details.task_ran = True
                 scheduler_settings.schedule_times[schedule_time] = task_details
-
-            # Sleep for 10 minutes
-            await asyncio.sleep(600)
+                # Sleep for 10 minutes
+                await asyncio.sleep(600)
+            await asyncio.sleep(60)
 
         meme_tickers = await get_meme_tickers()
 
