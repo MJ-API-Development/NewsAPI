@@ -5,11 +5,13 @@ from typing import Coroutine, TypeAlias
 
 import aiohttp
 
+from src.models.sql.news import News, Thumbnails, RelatedTickers
+from src.connector.data_instance import mysql_instance
 from src.config import config_instance
 from src.models import NewsArticle
 from src.models import RssArticle
 from src.telemetry import capture_telemetry
-from src.utils import camel_to_snake
+from src.utils import camel_to_snake, create_id
 from src.utils.my_logger import init_logger
 
 sendArticleType: TypeAlias = Coroutine[RssArticle | NewsArticle, None, RssArticle | NewsArticle | None]
@@ -120,7 +122,7 @@ class DataConnector:
                     self._logger.info(f"Sent article : response : {response_data.get('payload')}")
                     return None
 
-                self._logger.error(f"Error sending article to database : {await response.text() }")
+                self._logger.error(f"Error sending article to database : {await response.text()}")
                 return article
 
             except aiohttp.ClientError as e:
@@ -135,6 +137,62 @@ class DataConnector:
                 self._logger.error(f"Exception sending article to database : {str(e)}")
                 return article
 
+    async def send_to_database(self, article_list: list[RssArticle | NewsArticle]):
+        """
+            **send_to_database**
+
+        :param article_list:
+        :return:
+        """
+        with mysql_instance.session_generator() as session:
+            news_instance_tasks = [self.create_news_instance(article) for article in article_list]
+            thumbnail_instance_tasks = [self.create_thumbnails_instance(article) for article in article_list]
+            related_tickers_instance_tasks = [self.create_related_tickers(article) for article in article_list]
+
+            news_instances = await asyncio.gather(*news_instance_tasks)
+            thumbnail_instances = await asyncio.gather(*thumbnail_instance_tasks)
+            related_tickers_instances = await asyncio.gather(*related_tickers_instance_tasks)
+
+            try:
+                session.bulk_save_objects(news_instances)
+                session.bulk_save_objects(thumbnail_instances)
+                session.bulk_save_objects(related_tickers_instances)
+            except Exception as e:
+                pass
+
+    @staticmethod
+    async def create_news_instance(article: RssArticle | NewsArticle) -> News:
+        """
+        **create_news_instance**
+
+        :param article:
+        :return:
+        """
+        return News(uuid=article.uuid, title=article.title, publisher=article.publisher,
+                    link=article.link, providerPublishTime=article.providerPublishTime,
+                    _type=article.type)
+
+    @staticmethod
+    async def create_thumbnails_instance(article: RssArticle | NewsArticle) -> Thumbnails:
+        """
+        **create_thumbnails_instance**
+
+
+        :param article:
+        :return:
+        """
+        return [Thumbnails(thumbnail_id=create_id(), uuid=article.uuid, url=thumb.get('url'),
+                           width=thumb.get('width'), height=thumb.get('height'), tag=thumb.get('tag')) for thumb in
+                article.thumbnail]
+
+    @staticmethod
+    async def create_related_tickers(article: RssArticle | NewsArticle) -> RelatedTickers:
+        """
+
+        :param article:
+        :return:
+        """
+        return [RelatedTickers(uuid=article.uuid, ticker=ticker) for ticker in article.relatedTickers]
 
 def create_auth_headers():
     return {

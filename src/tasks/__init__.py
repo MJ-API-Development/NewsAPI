@@ -199,6 +199,7 @@ async def get_meme_tickers(count: int = 150, offset: int = 0) -> dict[str, str]:
         tickers[symbol] = name
 
     tasks_logger.info(tickers)
+
     return tickers
 
 

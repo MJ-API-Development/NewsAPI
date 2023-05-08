@@ -1,7 +1,7 @@
-
 class ErrorParsingFeeds(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__(args, kwargs)
+
     code = 400
     description = "General Parser Error while parsing feeds"
 
@@ -17,5 +17,14 @@ class ErrorParsingHTMLDocument(Exception):
 class RequestError(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__(args, kwargs)
+
     code = 400
     description = "Error Making Request"
+
+
+class InputError(Exception):
+    def __init__(self, *args, **kwargs):
+        super().__init__(args, kwargs)
+
+    code = 500
+    description = "Bad Input Error"
