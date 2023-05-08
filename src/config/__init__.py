@@ -134,6 +134,7 @@ class ConfigInstance(BaseSettings):
     GATEWAY_API: GatewaySettings = GatewaySettings()
     APP_SETTINGS: APPSettings = APPSettings()
     CLOUDFLARE_SETTINGS: CloudflareSettings = CloudflareSettings()
+    DEBUG: bool = Field(default=False)
 
     class Config:
         env_file = '.env.development'

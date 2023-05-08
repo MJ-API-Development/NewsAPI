@@ -1,7 +1,6 @@
-from typing import Self
+
 from datetime import datetime, time
 
-import aiohttp
 from dateutil.parser import parse, ParserError
 from sqlalchemy import Column, String, Integer, inspect, ForeignKey, func
 from sqlalchemy.dialects.mysql import LONGTEXT
@@ -10,11 +9,12 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import relationship, joinedload
 from sqlalchemy.orm.exc import DetachedInstanceError
 
-from src.exceptions import InputError
-# from src.databases.models.ndb_datastore.news import RelatedTickers, Thumbnails
-
 from src.connector.data_instance import Base, sessionType, mysql_instance
+from src.exceptions import InputError
 from src.utils import create_id
+
+
+# from src.databases.models.ndb_datastore.news import RelatedTickers, Thumbnails
 
 
 class NewsSentiment(Base):
@@ -64,7 +64,7 @@ class NewsSentiment(Base):
         return not not self.stock_codes
 
     @classmethod
-    async def save_all(cls, instance_list: list[Self], session: sessionType) -> list[Self]:
+    async def save_all(cls, instance_list, session: sessionType):
         """
         :param instance_list:
         :param session:
@@ -82,58 +82,6 @@ class NewsSentiment(Base):
             # TODO need to log this error
             session.rollback()
             pass
-
-    async def download_article(self, headers: dict[str, str]) -> Self:
-        """
-        Download the article from the link stored in news_sentiment.link,
-        then store the results in news_sentiment.article
-        """
-        async with aiohttp.ClientSession(headers=headers) as session:
-            async with session.get(self.link) as response:
-                if response.status == 200:
-                    self.article = await response.read()
-                    return self
-            return None
-
-    @classmethod
-    async def bulk_update(cls, instance_list: list[Self], session: sessionType) -> None:
-        """
-            given a list of instances update them
-        :param instance_list:
-        :param session:
-        :return:
-        """
-        try:
-            session.bulk_save_objects(instance_list, update_changed_only=True)
-            session.commit()
-        except DataError:
-            # TODO needs to log this error
-            pass
-
-    @classmethod
-    async def get_unprocessed_articles(cls, session: sessionType, _type: str = "article") -> list[Self]:
-        """
-            Retrieve all articles from the database that have not been processed yet, i.e.
-             where the article field is empty, and the sentiment_article field is empty
-        """
-        # Retrieve unprocessed articles using a query to the database
-        if _type == "article":
-            return session.query(cls).filter(cls.article.is_(None)).all()
-        elif _type == "tldr":
-            # noinspection PyUnresolvedReferences
-            return session.query(cls).filter(cls.article_tldr.is_(None)).all()
-        elif _type == "article_sentiment":
-            return session.query(cls).filter(cls.sentiment_article.is_(None)).all()
-
-    @classmethod
-    async def get_present_uuid_list(cls, session: sessionType) -> list[Self]:
-        """
-
-        :param session:
-        :return:
-        """
-        return session.query(cls.article_uuid).all()
-
 
 # noinspection DuplicatedCode
 def create_start_end_timestamps(_date: str) -> tuple[int, int]:
@@ -155,16 +103,16 @@ class _News:
     article_page_size = 10
 
     @classmethod
-    async def get_by_uuid(cls, uuid: str, session: sessionType) -> Self:
+    async def get_by_uuid(cls, uuid: str, session: sessionType):
         return session.query(cls).filter(cls.uuid == uuid).first()
 
     @classmethod
-    async def get_by_uuid_list(cls, uuid_list: list[str], session: sessionType) -> list[Self]:
+    async def get_by_uuid_list(cls, uuid_list: list[str], session: sessionType):
         """returns all articles matching the supplied uuid lists"""
         return session.query(cls).filter(cls.uuid.in_(uuid_list)).all() if isinstance(uuid_list, list) else []
 
     @classmethod
-    async def fetch_by_uuid(cls, uuid: str, session: sessionType) -> list[Self]:
+    async def fetch_by_uuid(cls, uuid: str, session: sessionType):
         """returns only those entities that match the supplied uuid"""
         return session.query(cls).filter(cls.uuid == uuid).all()
 
@@ -172,7 +120,7 @@ class _News:
         ...
 
     @classmethod
-    async def save_all(cls, instance_list: list[Self], session: sessionType) -> None:
+    async def save_all(cls, instance_list: list, session: sessionType) -> None:
         """
             saves instances related to news articles
         :param instance_list:
@@ -272,7 +220,7 @@ class RelatedTickers(Base, _News):
         return not not self.uuid
 
     @classmethod
-    async def fetch_by_ticker(cls, ticker: str, session: sessionType) -> list[Self]:
+    async def fetch_by_ticker(cls, ticker: str, session: sessionType):
         latest_publish_time = session.query(func.max(News.providerPublishTime)).scalar()
         subquery = session.query(News.uuid).filter(News.providerPublishTime <= latest_publish_time).subquery()
         subquery_select = select(subquery.c.uuid)
@@ -352,13 +300,13 @@ class News(Base, _News):
                f"time: {self.providerPublishTime}, type: {self.type}"
 
     @classmethod
-    async def get_by_uuid_list(cls, uuid_list: list[str], session: sessionType) -> list[Self]:
+    async def get_by_uuid_list(cls, uuid_list: list[str], session: sessionType):
         """Returns all articles matching the supplied uuid list, including sentiment relationship"""
         return session.query(cls).options(joinedload(cls.sentiment)).options(joinedload(cls.tickers)).options(
             joinedload(cls.thumbnails)).filter(cls.uuid.in_(uuid_list)).all() if isinstance(uuid_list, list) else []
 
     @classmethod
-    async def fetch_by_day_published(cls, date_published: str, session: sessionType) -> list[Self]:
+    async def fetch_by_day_published(cls, date_published: str, session: sessionType):
         """
             **fetch_by_day_published**
                 Fetch by day published -- returns a list of News
@@ -374,7 +322,7 @@ class News(Base, _News):
         return query.all()
 
     @classmethod
-    async def fetch_by_publisher(cls, publisher: str, session: sessionType) -> list[Self]:
+    async def fetch_by_publisher(cls, publisher: str, session: sessionType):
         """
         fetch by publisher -- returns a publisher , session.
         :param publisher:
@@ -393,7 +341,7 @@ class News(Base, _News):
         )
 
     @classmethod
-    async def get_bounded(cls, upper_bound: int, session: sessionType) -> list[Self]:
+    async def get_bounded(cls, upper_bound: int, session: sessionType):
         """
         **get_bounded**
             sorted by most recent - will return News Tickers Sentiment and Thumbnails
@@ -420,7 +368,7 @@ class News(Base, _News):
         # return [news.uuid for news in news_list]
 
     @classmethod
-    async def get_uuids_without_sentiment_analysis(cls, session: sessionType) -> list[Self]:
+    async def get_uuids_without_sentiment_analysis(cls, session: sessionType):
         """
             lookup all tables without sentiment analysis
         :param session:

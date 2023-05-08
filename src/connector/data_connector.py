@@ -88,15 +88,10 @@ class DataConnector:
         if self.mem_buffer:
             self._logger.info(f"Will attempt sending {len(self.mem_buffer)} Articles to the Cron API")
             initial_articles = len(self.mem_buffer)
-            create_article_tasks: list[sendArticleType] = [self.send_article_to_storage(article=article)
-                                                           for article in self.mem_buffer if article]
+            # create_article_tasks: list[sendArticleType] = [self.send_article_to_storage(article=article)
+            #                                                for article in self.mem_buffer if article]
+            create_article_tasks = await self.send_to_database(article_list=self.mem_buffer)
             self.mem_buffer = []
-
-            articles_not_saved: list[RssArticle | NewsArticle | None] = await asyncio.gather(*create_article_tasks)
-            articles_not_saved: list[RssArticle | NewsArticle] = [article for article in articles_not_saved
-                                                                  if article is not None]
-
-            self.mem_buffer = articles_not_saved
             self._logger.info(f"Sent {initial_articles - len(self.mem_buffer)} Articles to storage backend")
         else:
             self._logger.info(f"There is no articles to send to the CRON API")
@@ -137,6 +132,7 @@ class DataConnector:
                 self._logger.error(f"Exception sending article to database : {str(e)}")
                 return article
 
+    @capture_telemetry(name='send_to_database')
     async def send_to_database(self, article_list: list[RssArticle | NewsArticle]):
         """
             **send_to_database**
@@ -144,21 +140,27 @@ class DataConnector:
         :param article_list:
         :return:
         """
-        with mysql_instance.session_generator() as session:
-            news_instance_tasks = [self.create_news_instance(article) for article in article_list]
-            thumbnail_instance_tasks = [self.create_thumbnails_instance(article) for article in article_list]
-            related_tickers_instance_tasks = [self.create_related_tickers(article) for article in article_list]
+        with mysql_instance.get_session() as session:
+            batch_size: int = 20 if len(article_list) > 20 else len(article_list) # process articles in groups of 20
 
-            news_instances = await asyncio.gather(*news_instance_tasks)
-            thumbnail_instances = await asyncio.gather(*thumbnail_instance_tasks)
-            related_tickers_instances = await asyncio.gather(*related_tickers_instance_tasks)
+            for i in range(0, len(article_list), batch_size):
+                batch_articles: list[RssArticle | NewsArticle] = article_list[i:i + batch_size]
 
-            try:
-                session.bulk_save_objects(news_instances)
-                session.bulk_save_objects(thumbnail_instances)
-                session.bulk_save_objects(related_tickers_instances)
-            except Exception as e:
-                pass
+                news_instance_tasks = [self.create_news_instance(article) for article in batch_articles]
+                thumbnail_instance_tasks = [self.create_thumbnails_instance(article) for article in batch_articles]
+                related_tickers_instance_tasks = [self.create_related_tickers(article) for article in batch_articles]
+
+                news_instances = await asyncio.gather(*news_instance_tasks)
+                thumbnail_instances = await asyncio.gather(*thumbnail_instance_tasks)
+                related_tickers_instances = await asyncio.gather(*related_tickers_instance_tasks)
+
+                try:
+                    session.bulk_save_objects(news_instances)
+                    session.bulk_save_objects(thumbnail_instances)
+                    session.bulk_save_objects(related_tickers_instances)
+
+                except Exception as e:
+                    session.rollback()
 
     @staticmethod
     async def create_news_instance(article: RssArticle | NewsArticle) -> News:
