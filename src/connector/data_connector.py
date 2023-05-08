@@ -4,6 +4,7 @@ import pickle
 from typing import Coroutine, TypeAlias
 
 import aiohttp
+from sqlalchemy.exc import DataError, OperationalError, IntegrityError, PendingRollbackError
 
 from src.models.sql.news import News, Thumbnails, RelatedTickers
 from src.connector.data_instance import mysql_instance
@@ -28,6 +29,7 @@ async def save_to_local_drive(article: NewsArticle | RssArticle):
     # TODO- learn how to save pickled classes to storage - or use a package that has the functionality
 
 
+# noinspection PyBroadException
 class DataConnector:
     """
     **DataConnector**
@@ -132,7 +134,6 @@ class DataConnector:
                 self._logger.error(f"Exception sending article to database : {str(e)}")
                 return article
 
-    @capture_telemetry(name='send_to_database')
     async def send_to_database(self, article_list: list[RssArticle | NewsArticle]):
         """
             **send_to_database**
@@ -142,10 +143,9 @@ class DataConnector:
         """
         with mysql_instance.get_session() as session:
             batch_size: int = 20 if len(article_list) > 20 else len(article_list) # process articles in groups of 20
-
+            total_saved = 0
             for i in range(0, len(article_list), batch_size):
                 batch_articles: list[RssArticle | NewsArticle] = article_list[i:i + batch_size]
-
                 news_instance_tasks = [self.create_news_instance(article) for article in batch_articles]
                 thumbnail_instance_tasks = [self.create_thumbnails_instance(article) for article in batch_articles]
                 related_tickers_instance_tasks = [self.create_related_tickers(article) for article in batch_articles]
@@ -155,12 +155,21 @@ class DataConnector:
                 related_tickers_instances = await asyncio.gather(*related_tickers_instance_tasks)
 
                 try:
-                    session.bulk_save_objects(news_instances)
-                    session.bulk_save_objects(thumbnail_instances)
-                    session.bulk_save_objects(related_tickers_instances)
-
-                except Exception as e:
+                    session.bulk_save_objects([instance for instance in news_instances if instance is not None])
+                    total_saved += 1
+                except (DataError, OperationalError, IntegrityError, PendingRollbackError):
                     session.rollback()
+                    continue
+
+                try:
+                    session.bulk_save_objects([instance for instance in thumbnail_instances if instance is not None])
+                    session.bulk_save_objects([instance for instance in related_tickers_instances if instance is not None])
+                    self._logger.error(f"Saved : {str(i)} Articles")
+                except (DataError, OperationalError, IntegrityError, PendingRollbackError):
+                    self._logger.error(f"Failed to Save : {str(i)} Articles")
+                    session.rollback()
+
+            self._logger.info(f"Overall Articles Saved : {total_saved}")
 
     @staticmethod
     async def create_news_instance(article: RssArticle | NewsArticle) -> News:
@@ -170,9 +179,12 @@ class DataConnector:
         :param article:
         :return:
         """
-        return News(uuid=article.uuid, title=article.title, publisher=article.publisher,
-                    link=article.link, providerPublishTime=article.providerPublishTime,
-                    _type=article.type)
+        try:
+            return News(uuid=article.uuid, title=article.title, publisher=article.publisher,
+                        link=article.link, providerPublishTime=article.providerPublishTime,
+                        _type=article.type)
+        except Exception:
+            return None
 
     @staticmethod
     async def create_thumbnails_instance(article: RssArticle | NewsArticle) -> Thumbnails:
@@ -183,9 +195,12 @@ class DataConnector:
         :param article:
         :return:
         """
-        return [Thumbnails(thumbnail_id=create_id(), uuid=article.uuid, url=thumb.get('url'),
-                           width=thumb.get('width'), height=thumb.get('height'), tag=thumb.get('tag')) for thumb in
-                article.thumbnail]
+        try:
+            return [Thumbnails(thumbnail_id=create_id(), uuid=article.uuid, url=thumb.get('url'),
+                               width=thumb.get('width'), height=thumb.get('height'), tag=thumb.get('tag')) for thumb in
+                    article.thumbnail]
+        except Exception:
+            return None
 
     @staticmethod
     async def create_related_tickers(article: RssArticle | NewsArticle) -> RelatedTickers:
@@ -194,7 +209,11 @@ class DataConnector:
         :param article:
         :return:
         """
-        return [RelatedTickers(uuid=article.uuid, ticker=ticker) for ticker in article.relatedTickers]
+        try:
+            return [RelatedTickers(uuid=article.uuid, ticker=ticker) for ticker in article.relatedTickers]
+        except Exception:
+            return None
+
 
 def create_auth_headers():
     return {
