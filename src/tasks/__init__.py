@@ -204,14 +204,17 @@ async def get_meme_tickers(count: int = 150, offset: int = 0) -> dict[str, str]:
     for _ticker, name in list(get_meme_tickers_us().items()):
         if _ticker not in _present_tickers:
             tickers[_ticker] = name
+            _present_tickers.add(_ticker)
 
     for _ticker, name in list(get_meme_tickers_canada().items()):
         if _ticker not in _present_tickers:
             tickers[_ticker] = name
+            _present_tickers.add(_ticker)
 
     for _ticker, name in list(get_meme_tickers_brazil().items()):
         if _ticker not in _present_tickers:
             tickers[_ticker] = name
+            _present_tickers.add(_ticker)
 
     return tickers
 
