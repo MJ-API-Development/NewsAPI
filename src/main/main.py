@@ -75,10 +75,10 @@ async def scheduled_task() -> None:
                 # exit loop
                 continue
 
-        # Sleep for 10 minutes
-        await asyncio.sleep(600)
+        # Sleep for 60 minutes
+        await asyncio.sleep(600*60)
 
-        if can_refresh_count == 6*3:
+        if can_refresh_count == 3:
             # will refresh meme tickers every 3 hours
             meme_tickers = await get_meme_tickers()
             can_refresh_count = 0
