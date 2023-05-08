@@ -14,7 +14,6 @@ from src.utils.my_logger import init_logger
 news_scrapper_logger = init_logger('news-scrapper-logger')
 
 
-
 async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[NewsArticle | RssArticle]]]:
     try:
         articles_tickers_tasks: list[tuple[list[NewsArticle], str]] = [ticker_articles(ticker=ticker) for ticker in
@@ -110,7 +109,6 @@ async def alternate_news_sources(*args, **kwargs) -> list[dict[str, RssArticle]]
     return news
 
 
-@capture_telemetry(name='parse_article')
 async def parse_article(article: RssArticle) -> tuple[str | None, str | None, str | None, list[dict[str, str | int]]]:
     """**parse_article**
     will parse articles from yfinance
