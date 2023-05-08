@@ -14,7 +14,7 @@ from src.utils.my_logger import init_logger
 news_scrapper_logger = init_logger('news-scrapper-logger')
 
 
-@capture_telemetry(name='scrape_news_yahoo')
+
 async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[NewsArticle | RssArticle]]]:
     try:
         articles_tickers_tasks: list[tuple[list[NewsArticle], str]] = [ticker_articles(ticker=ticker) for ticker in
