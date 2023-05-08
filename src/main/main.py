@@ -73,7 +73,7 @@ async def scheduled_task() -> None:
                 task_details.task_ran = True
                 scheduler_settings.schedule_times[schedule_time] = task_details
                 # exit loop
-                continue
+                break
 
         # Sleep for 60 minutes
         await asyncio.sleep(600*60)
