@@ -68,7 +68,7 @@ class CloudflareProxy:
         """
         try:
             headers: dict[str, str] = await switch_headers()
-
+            headers.update({'X-SECURITY-TOKEN': config_instance().CLOUDFLARE_SETTINGS.SECURITY_TOKEN})
             if self.error_count < self.error_thresh_hold:
                 request_url = f"{self.worker_url}?url={url}&method={method}"
             else:

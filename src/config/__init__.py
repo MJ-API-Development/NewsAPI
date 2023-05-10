@@ -112,6 +112,7 @@ class CloudflareSettings(BaseSettings):
     CLOUD_FLARE_API_KEY: str = Field(..., env="CLOUD_FLARE_API_KEY")
     CLOUD_FLARE_EMAIL: str = Field(..., env="CLOUD_FLARE_EMAIL")
     CLOUDFLARE_WORKER_NAME: str = Field(default="proxytask")
+    SECURITY_TOKEN: str = Field(..., env="SECURITY_TOKEN")
 
     class Config:
         env_file = '.env.development'

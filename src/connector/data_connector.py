@@ -92,7 +92,7 @@ class DataConnector:
             initial_articles = len(self.mem_buffer)
             # create_article_tasks: list[sendArticleType] = [self.send_article_to_storage(article=article)
             #                                                for article in self.mem_buffer if article]
-            create_article_tasks = await self.send_to_database(article_list=self.mem_buffer)
+            _ = await self.send_to_database(article_list=self.mem_buffer)
             self.mem_buffer = []
             self._logger.info(f"Sent {initial_articles - len(self.mem_buffer)} Articles to storage backend")
         else:
