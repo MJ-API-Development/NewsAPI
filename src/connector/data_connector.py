@@ -145,6 +145,7 @@ class DataConnector:
             batch_size: int = 20 if len(article_list) > 20 else len(article_list) # process articles in groups of 20
             total_saved = 0
             for i in range(0, len(article_list), batch_size):
+
                 batch_articles: list[RssArticle | NewsArticle] = article_list[i:i + batch_size]
                 news_instance_tasks = [self.create_news_instance(article) for article in batch_articles]
                 thumbnail_instance_tasks = [self.create_thumbnails_instance(article) for article in batch_articles]
@@ -156,6 +157,7 @@ class DataConnector:
 
                 try:
                     session.bulk_save_objects([instance for instance in news_instances if instance is not None])
+                    session.flush()
                     total_saved += 1
                 except (DataError, OperationalError, IntegrityError, PendingRollbackError):
                     session.rollback()
@@ -163,7 +165,9 @@ class DataConnector:
 
                 try:
                     session.bulk_save_objects([instance for instance in thumbnail_instances if instance is not None])
+                    session.flush()
                     session.bulk_save_objects([instance for instance in related_tickers_instances if instance is not None])
+                    session.flush()
                     self._logger.error(f"Saved : {str(i)} Articles")
                 except (DataError, OperationalError, IntegrityError, PendingRollbackError):
                     self._logger.error(f"Failed to Save : {str(i)} Articles")
