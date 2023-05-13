@@ -16,12 +16,17 @@ news_scrapper_logger = init_logger('news-scrapper-logger')
 
 async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[NewsArticle | RssArticle]]]:
     try:
-        articles_tickers_tasks: list[tuple[list[NewsArticle], str]] = [ticker_articles(ticker=ticker) for ticker in
-                                                                       tickers]
-        news_scrapper_logger.info(f'scrape_news_yahoo tasks : {articles_tickers_tasks}')
-        articles_tickers = await asyncio.gather(*articles_tickers_tasks)
-        news_scrapper_logger.info(f'scrapped a total of {len(articles_tickers)} articles')
-        return [{ticker: articles} for articles, ticker in articles_tickers if articles]
+        articles_tickers = []
+        chunk_size = 10
+        for i in range(0, len(tickers), chunk_size):
+            chunk = tickers[i:i+chunk_size]
+            tasks = [ticker_articles(ticker=ticker) for ticker in chunk]
+            results = await asyncio.gather(*tasks)
+            for articles, ticker in zip(results, chunk):
+                if articles:
+                    articles_tickers.append({ticker: articles})
+
+        return articles_tickers
     except Exception as e:
         print(f"Exception raised: {e}")
         return []
