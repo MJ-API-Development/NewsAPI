@@ -25,6 +25,7 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[NewsArtic
             for articles, ticker in zip(results, chunk):
                 if articles:
                     articles_tickers.append({ticker: articles})
+            await asyncio.sleep(30)
 
         return articles_tickers
     except Exception as e:
