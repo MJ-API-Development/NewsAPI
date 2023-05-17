@@ -25,7 +25,7 @@ class MYSQLDatabase:
 
             session_gen = self.session_generator()
             # self.get_session = next(session_gen)
-            self.get_session = self.create_session(self.engine)
+            self.get_session: Session = self.create_session(self.engine)
             config_instance().DEBUG and self._logger.info(f"Connected to database : {db_url}")
         except OperationalError:
             config_instance().DEBUG and self._logger.error("Unable to connect to MYSQL Database")
@@ -49,7 +49,7 @@ class MYSQLDatabase:
         return create_engine(db_url)
 
     def save_all(self, instance_list: list):
-        with self.get_session() as session:
+        with self.get_session as session:
             for instance in instance_list:
                 session.add(instance)
             session.commit()

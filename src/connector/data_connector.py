@@ -142,7 +142,8 @@ class DataConnector:
         :return:
         """
         with mysql_instance.get_session() as session:
-            batch_size: int = 20 if len(article_list) > 20 else len(article_list) # process articles in groups of 20
+            # process articles in groups of 20
+            batch_size: int = 20 if len(article_list) > 20 else len(article_list)
             total_saved = 0
             for i in range(0, len(article_list), batch_size):
 
@@ -156,7 +157,7 @@ class DataConnector:
                 related_tickers_instances = await asyncio.gather(*related_tickers_instance_tasks)
 
                 try:
-                    session.bulk_save_objects([instance for instance in news_instances if instance is not None])
+                    session.bulk_save_objects(objects=[instance for instance in news_instances if instance is not None])
                     session.flush()
                     total_saved += 1
                 except (DataError, OperationalError, IntegrityError, PendingRollbackError):
@@ -164,9 +165,9 @@ class DataConnector:
                     continue
 
                 try:
-                    session.bulk_save_objects([instance for instance in thumbnail_instances if instance is not None])
+                    session.bulk_save_objects(objects=[instance for instance in thumbnail_instances if instance is not None])
                     session.flush()
-                    session.bulk_save_objects([instance for instance in related_tickers_instances if instance is not None])
+                    session.bulk_save_objects(objects=[instance for instance in related_tickers_instances if instance is not None])
                     session.flush()
                     self._logger.error(f"Saved : {str(i)} Articles")
                 except (DataError, OperationalError, IntegrityError, PendingRollbackError):

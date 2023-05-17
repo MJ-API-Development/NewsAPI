@@ -74,15 +74,16 @@ async def scheduled_task() -> None:
             # sleep one minute then run again
             await asyncio.sleep(60)
 
+        # refresh meme tickers
         meme_tickers = await get_meme_tickers()
 
+        # refresh schedules
         scheduler_settings.schedule_times = create_schedules()
 
 
 @app.on_event("startup")
 async def startup_event():
     asyncio.create_task(scheduled_task())
-
 
 
 ########################################################################################################################
