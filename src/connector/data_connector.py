@@ -72,7 +72,8 @@ class DataConnector:
 
         self._logger.info(f"incoming article batches : {len(extended_articles)}")
         for article in list(itertools.chain(*extended_articles)):
-            if isinstance(article, (NewsArticle, RssArticle)) and article.uuid not in self._articles_present:
+            self._logger.info(f"what sort of data is this {type(article)}")
+            if article and article.uuid not in self._articles_present:
                 self.mem_buffer.append(article)
                 self._articles_present.add(article.uuid)
 
