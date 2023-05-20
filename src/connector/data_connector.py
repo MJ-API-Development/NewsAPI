@@ -48,7 +48,6 @@ class DataConnector:
         self.aio_session: aiohttp.ClientSession = aiohttp.ClientSession(headers=create_auth_headers())
         self._logger = init_logger(camel_to_snake(self.__class__.__name__))
 
-
     def init(self):
         """
             prepare package and restore saved files from storage
@@ -72,7 +71,7 @@ class DataConnector:
             extended_articles.extend(article_dict.values())
 
         self._logger.info(f"incoming article batches : {len(extended_articles)}")
-        for article in itertools.chain(*extended_articles):
+        for article in list(itertools.chain(*extended_articles)):
             if isinstance(article, (NewsArticle, RssArticle)) and article.uuid not in self._articles_present:
                 self.mem_buffer.append(article)
                 self._articles_present.add(article.uuid)
