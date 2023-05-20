@@ -4,6 +4,7 @@ import pickle
 from typing import Coroutine, TypeAlias
 
 import aiohttp
+import pymysql
 from sqlalchemy.exc import DataError, OperationalError, IntegrityError, PendingRollbackError
 
 from src.models.sql.news import News, Thumbnails, RelatedTickers
@@ -169,12 +170,19 @@ class DataConnector:
                         error_occured = True
                         self._logger.info(f"exception Occurred : {e}")
                         session.rollback()
+                    except pymysql.err.IntegrityError as e:
+                        self._logger.info(f"exception Occurred : {e}")
+                        session.rollback()
+
                 if not error_occured:
                     for thumbnail_list in thumbnail_instances:
                         for thumbnail in thumbnail_list:
                             try:
                                 session.add(thumbnail)
                             except (DataError, OperationalError, IntegrityError, PendingRollbackError) as e:
+                                self._logger.info(f"exception Occurred : {e}")
+                                session.rollback()
+                            except pymysql.err.IntegrityError as e:
                                 self._logger.info(f"exception Occurred : {e}")
                                 session.rollback()
 
@@ -185,6 +193,10 @@ class DataConnector:
                             except (DataError, OperationalError, IntegrityError, PendingRollbackError) as e:
                                 self._logger.info(f"exception Occurred : {e}")
                                 session.rollback()
+                            except pymysql.err.IntegrityError as e:
+                                self._logger.info(f"exception Occurred : {e}")
+                                session.rollback()
+
                     session.flush()
 
             self._logger.info(f"Overall Articles Saved : {total_saved}")
