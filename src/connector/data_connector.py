@@ -140,7 +140,7 @@ class DataConnector:
                 self._logger.error(f"Exception sending article to database : {str(e)}")
                 return article
 
-    async def send_to_database(self,):
+    async def send_to_database(self):
         """
             **send_to_database**
         :return:
