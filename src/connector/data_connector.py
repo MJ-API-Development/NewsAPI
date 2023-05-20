@@ -73,7 +73,7 @@ class DataConnector:
 
         self._logger.info(f"incoming article batches : {len(extended_articles)}")
         for article in itertools.chain(*extended_articles):
-            if isinstance(article, NewsArticle) and article.uuid not in self._articles_present:
+            if isinstance(article, (NewsArticle, RssArticle)) and article.uuid not in self._articles_present:
                 self.mem_buffer.append(article)
                 self._articles_present.add(article.uuid)
 
