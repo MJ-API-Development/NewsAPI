@@ -166,11 +166,7 @@ class DataConnector:
                 for instance in news_instances:
                     try:
                         session.add(instance)
-                    except (DataError, OperationalError, IntegrityError, PendingRollbackError) as e:
-                        error_occured = True
-                        self._logger.info(f"exception Occurred : {e}")
-                        session.rollback()
-                    except pymysql.err.IntegrityError as e:
+                    except Exception as e:
                         self._logger.info(f"exception Occurred : {e}")
                         session.rollback()
 
@@ -179,10 +175,7 @@ class DataConnector:
                         for thumbnail in thumbnail_list:
                             try:
                                 session.add(thumbnail)
-                            except (DataError, OperationalError, IntegrityError, PendingRollbackError) as e:
-                                self._logger.info(f"exception Occurred : {e}")
-                                session.rollback()
-                            except pymysql.err.IntegrityError as e:
+                            except Exception as e:
                                 self._logger.info(f"exception Occurred : {e}")
                                 session.rollback()
 
@@ -190,14 +183,11 @@ class DataConnector:
                         for ticker in tickers_list:
                             try:
                                 session.add(ticker)
-                            except (DataError, OperationalError, IntegrityError, PendingRollbackError) as e:
-                                self._logger.info(f"exception Occurred : {e}")
-                                session.rollback()
-                            except pymysql.err.IntegrityError as e:
+                            except Exception as e:
                                 self._logger.info(f"exception Occurred : {e}")
                                 session.rollback()
 
-                    session.flush()
+                session.flush()
 
             self._logger.info(f"Overall Articles Saved : {total_saved}")
 
