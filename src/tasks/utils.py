@@ -22,7 +22,8 @@ async def switch_headers() -> dict[str, str]:
     #     {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/40.15063.0.0'},
     #     {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:54.0) Gecko/20100101 Firefox/54.0'}
     # ])
-    selected_header = random.choice(user_agents)
+    user_agent = random.choice(user_agents)
+    selected_header = {'User-Agent': user_agent}
     selected_header.update(
         {
             'Accept-Language': 'en-US,en;q=0.9',
