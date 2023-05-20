@@ -76,7 +76,7 @@ async def ticker_articles(ticker: str) -> tuple[list[NewsArticle], str]:
         # Note: funny way of catching parser errors but hey - beggars cant be choosers
         if "not supported on your current browser version" not in summary.casefold():
             _article.summary = summary
-        if "not supported on your current browser version" not in body:
+        if "not supported on your current browser version" not in body.casefold():
             _article.body = body
 
         articles.append(_article)

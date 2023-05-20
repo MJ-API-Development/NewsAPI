@@ -161,33 +161,31 @@ class DataConnector:
                 news_instances = await asyncio.gather(*news_instance_tasks)
                 thumbnail_instances = await asyncio.gather(*thumbnail_instance_tasks)
                 related_tickers_instances = await asyncio.gather(*related_tickers_instance_tasks)
-
-                try:
-                    session.bulk_save_objects(objects=[instance for instance in news_instances if instance is not None])
-                    session.flush()
-                    total_saved += 1
-                except (DataError, OperationalError, IntegrityError, PendingRollbackError) as e:
-                    self._logger.info(f"exception Occured : {e}")
-                    session.rollback()
-                    continue
-
-                try:
-                    normalized_thumbnails = []
+                error_occured = False
+                for instance in news_instances:
+                    try:
+                        session.add(instance)
+                    except (DataError, OperationalError, IntegrityError, PendingRollbackError) as e:
+                        error_occured = True
+                        self._logger.info(f"exception Occurred : {e}")
+                        session.rollback()
+                if not error_occured:
                     for thumbnail_list in thumbnail_instances:
                         for thumbnail in thumbnail_list:
-                            normalized_thumbnails.append(thumbnail)
-                    session.bulk_save_objects(objects=[instance for instance in normalized_thumbnails if instance is not None])
-                    session.flush()
-                    normalized_tickers = []
+                            try:
+                                session.add(thumbnail)
+                            except (DataError, OperationalError, IntegrityError, PendingRollbackError) as e:
+                                self._logger.info(f"exception Occurred : {e}")
+                                session.rollback()
+
                     for tickers_list in related_tickers_instances:
                         for ticker in tickers_list:
-                            normalized_tickers.append(ticker)
-                    session.bulk_save_objects(objects=[instance for instance in normalized_tickers if instance is not None])
+                            try:
+                                session.add(ticker)
+                            except (DataError, OperationalError, IntegrityError, PendingRollbackError) as e:
+                                self._logger.info(f"exception Occurred : {e}")
+                                session.rollback()
                     session.flush()
-
-                except (DataError, OperationalError, IntegrityError, PendingRollbackError):
-                    session.rollback()
-                await asyncio.sleep(delay=10)
 
             self._logger.info(f"Overall Articles Saved : {total_saved}")
 
