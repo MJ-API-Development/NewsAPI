@@ -86,7 +86,6 @@ class DataConnector:
         self._logger.info(f"Done prepping articles batch for sending to storage")
         self._logger.info(f"Total Articles Prepped : {len(self.mem_buffer)}")
 
-    @capture_telemetry(name='mem_store-to-storage')
     async def mem_store_to_storage(self):
         """
             **mem_store_to_storage**
@@ -99,7 +98,7 @@ class DataConnector:
             initial_articles = len(self.mem_buffer)
             # create_article_tasks: list[sendArticleType] = [self.send_article_to_storage(article=article)
             #                                                for article in self.mem_buffer if article]
-            _ = await self.send_to_database(article_list=self.mem_buffer)
+            res = await self.send_to_database(article_list=self.mem_buffer)
             self.mem_buffer = []
             self._logger.info(f"Sent {initial_articles - len(self.mem_buffer)} Articles to storage backend")
         else:
@@ -141,20 +140,17 @@ class DataConnector:
                 self._logger.error(f"Exception sending article to database : {str(e)}")
                 return article
 
-    async def send_to_database(self, article_list: list[RssArticle | NewsArticle]):
+    async def send_to_database(self,):
         """
             **send_to_database**
-
-        :param article_list:
         :return:
         """
         with mysql_instance.get_session() as session:
             # process articles in groups of 20
-            batch_size: int = 20 if len(article_list) > 20 else len(article_list)
+            batch_size: int = 20 if len(self.mem_buffer) > 20 else len(self.mem_buffer)
             total_saved = 0
-            for i in range(0, len(article_list), batch_size):
-
-                batch_articles: list[RssArticle | NewsArticle] = article_list[i:i + batch_size]
+            for i in range(0, len(self.mem_buffer), batch_size):
+                batch_articles: list[RssArticle | NewsArticle] = self.mem_buffer[i:i + batch_size]
                 news_instance_tasks = [self.create_news_instance(article) for article in batch_articles]
                 thumbnail_instance_tasks = [self.create_thumbnails_instance(article) for article in batch_articles]
                 related_tickers_instance_tasks = [self.create_related_tickers(article) for article in batch_articles]
@@ -188,7 +184,12 @@ class DataConnector:
                                 self._logger.info(f"exception Occurred : {e}")
                                 session.rollback()
 
+                self._logger.info(f"Batch Count : {i}")
+
+            try:
                 session.flush()
+            except Exception as e:
+                self._logger.info(f"exception Occurred : {e}")
 
             self._logger.info(f"Overall Articles Saved : {total_saved}")
 
