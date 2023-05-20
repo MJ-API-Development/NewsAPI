@@ -48,6 +48,7 @@ class DataConnector:
         self.aio_session: aiohttp.ClientSession = aiohttp.ClientSession(headers=create_auth_headers())
         self._logger = init_logger(camel_to_snake(self.__class__.__name__))
 
+
     def init(self):
         """
             prepare package and restore saved files from storage
@@ -71,8 +72,8 @@ class DataConnector:
             extended_articles.extend(article_dict.values())
 
         self._logger.info(f"incoming article batches : {len(extended_articles)}")
-        for article in list(itertools.chain(*extended_articles)):
-            if article and article.uuid not in self._articles_present:
+        for article in itertools.chain(*extended_articles):
+            if isinstance(article, NewsArticle) and article.uuid not in self._articles_present:
                 self.mem_buffer.append(article)
                 self._articles_present.add(article.uuid)
 
@@ -173,6 +174,7 @@ class DataConnector:
                 except (DataError, OperationalError, IntegrityError, PendingRollbackError):
                     self._logger.error(f"Failed to Save : {str(i)} Articles")
                     session.rollback()
+                await asyncio.sleep(delay=10)
 
             self._logger.info(f"Overall Articles Saved : {total_saved}")
 

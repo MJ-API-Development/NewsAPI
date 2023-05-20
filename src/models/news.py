@@ -16,7 +16,7 @@ class NewsArticle(BaseModel):
     link: str
     providerPublishTime: int = Field(default_factory=lambda: int(datetime.now().timestamp()))
     type: str = Field(default='Story')
-    thumbnail: list[dict[str, str | int]] | None
+    thumbnail: list[dict[str, str | int]] | None = Field(default_factory=list())
     relatedTickers: list[str] = Field(default_factory=list())
 
     summary: str | None
