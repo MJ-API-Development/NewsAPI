@@ -62,17 +62,22 @@ class DataConnector:
             :return:
         """
         if not article_list:
-            self._logger.info("articles not found")
             return
 
         # Destructuring articles
         extended_articles: list[list[NewsArticle | RssArticle]] = []
         for article_dict in article_list:
-            extended_articles.extend(article_dict.values())
+            article_values = article_dict.values()
+            extended_articles.extend(article_values)
 
-        self._logger.info(f"incoming article batches : {len(extended_articles)}")
-        for article in list(itertools.chain(*extended_articles)):
-            self._logger.info(f"what sort of data is this {type(article)}")
+        normalized_list = []
+        for news_articles in extended_articles:
+            articles, ticker = news_articles
+            if isinstance(articles, list):
+                normalized_list.extend(articles)
+
+        self._logger.info(f"incoming article batches : {len(normalized_list)}")
+        for article in normalized_list:
             if article and article.uuid not in self._articles_present:
                 self.mem_buffer.append(article)
                 self._articles_present.add(article.uuid)
@@ -161,25 +166,32 @@ class DataConnector:
                     session.bulk_save_objects(objects=[instance for instance in news_instances if instance is not None])
                     session.flush()
                     total_saved += 1
-                except (DataError, OperationalError, IntegrityError, PendingRollbackError):
+                except (DataError, OperationalError, IntegrityError, PendingRollbackError) as e:
+                    self._logger.info(f"exception Occured : {e}")
                     session.rollback()
                     continue
 
                 try:
-                    session.bulk_save_objects(objects=[instance for instance in thumbnail_instances if instance is not None])
+                    normalized_thumbnails = []
+                    for thumbnail_list in thumbnail_instances:
+                        for thumbnail in thumbnail_list:
+                            normalized_thumbnails.append(thumbnail)
+                    session.bulk_save_objects(objects=[instance for instance in normalized_thumbnails if instance is not None])
                     session.flush()
-                    session.bulk_save_objects(objects=[instance for instance in related_tickers_instances if instance is not None])
+                    normalized_tickers = []
+                    for tickers_list in related_tickers_instances:
+                        for ticker in tickers_list:
+                            normalized_tickers.append(ticker)
+                    session.bulk_save_objects(objects=[instance for instance in normalized_tickers if instance is not None])
                     session.flush()
-                    self._logger.error(f"Saved : {str(i)} Articles")
+
                 except (DataError, OperationalError, IntegrityError, PendingRollbackError):
-                    self._logger.error(f"Failed to Save : {str(i)} Articles")
                     session.rollback()
                 await asyncio.sleep(delay=10)
 
             self._logger.info(f"Overall Articles Saved : {total_saved}")
 
-    @staticmethod
-    async def create_news_instance(article: RssArticle | NewsArticle) -> News:
+    async def create_news_instance(self, article: RssArticle | NewsArticle) -> News:
         """
         **create_news_instance**
 
@@ -190,11 +202,12 @@ class DataConnector:
             return News(uuid=article.uuid, title=article.title, publisher=article.publisher,
                         link=article.link, providerPublishTime=article.providerPublishTime,
                         _type=article.type)
-        except Exception:
+        except Exception as e:
+            self._logger.info(f"unable to create instance {str(e)}")
             return None
 
-    @staticmethod
-    async def create_thumbnails_instance(article: RssArticle | NewsArticle) -> Thumbnails:
+
+    async def create_thumbnails_instance(self, article: RssArticle | NewsArticle) -> Thumbnails:
         """
         **create_thumbnails_instance**
 
@@ -206,11 +219,12 @@ class DataConnector:
             return [Thumbnails(thumbnail_id=create_id(), uuid=article.uuid, url=thumb.get('url'),
                                width=thumb.get('width'), height=thumb.get('height'), tag=thumb.get('tag')) for thumb in
                     article.thumbnail]
-        except Exception:
+        except Exception as e:
+            self._logger.info(f"unable to create instance {str(e)}")
             return None
 
-    @staticmethod
-    async def create_related_tickers(article: RssArticle | NewsArticle) -> RelatedTickers:
+
+    async def create_related_tickers(self, article: RssArticle | NewsArticle) -> RelatedTickers:
         """
 
         :param article:
@@ -218,7 +232,8 @@ class DataConnector:
         """
         try:
             return [RelatedTickers(uuid=article.uuid, ticker=ticker) for ticker in article.relatedTickers]
-        except Exception:
+        except Exception as e:
+            self._logger.info(f"unable to create instance {str(e)}")
             return None
 
 

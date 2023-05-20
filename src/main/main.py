@@ -72,7 +72,7 @@ async def scheduled_task() -> None:
                 # Sleep for 1 hour minutes
                 await asyncio.sleep(600*6)
             # sleep one minute then run again
-            await asyncio.sleep(60)
+            await asyncio.sleep(6)
 
         # refresh meme tickers
         meme_tickers = await get_meme_tickers()
