@@ -167,6 +167,7 @@ class DataConnector:
                     try:
                         session.add(instance)
                     except Exception as e:
+                        error_occured = True
                         self._logger.info(f"exception Occurred : {e}")
                         session.rollback()
 
