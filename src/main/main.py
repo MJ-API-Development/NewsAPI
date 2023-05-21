@@ -7,7 +7,7 @@ from src.models import NewsArticle, RssArticle
 from src.api_routes.admin import admin_router
 from src.api_routes.telemetry import telemetry_router
 from src.config import scheduler_settings, create_schedules, config_instance
-from src.connector.data_connector import DataConnector
+from src.connector.data_connector import data_sink
 from src.tasks import can_run_task, get_meme_tickers
 from src.tasks.news_scraper import scrape_news_yahoo, alternate_news_sources
 from src.telemetry import Telemetry
@@ -39,7 +39,7 @@ tasks_lookup: dict[str, Callable[[list[str]], scraperType]] = {
     'alternate_news_sources': alternate_news_sources,
 }
 
-data_sink: DataConnector = DataConnector()
+
 
 telemetry: list[Telemetry] = []
 

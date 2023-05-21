@@ -1,17 +1,14 @@
 import asyncio
-import itertools
 import pickle
 from typing import Coroutine, TypeAlias
 
 import aiohttp
-import pymysql
-from sqlalchemy.exc import DataError, OperationalError, IntegrityError, PendingRollbackError
 
-from src.models.sql.news import News, Thumbnails, RelatedTickers
-from src.connector.data_instance import mysql_instance
 from src.config import config_instance
+from src.connector.data_instance import mysql_instance
 from src.models import NewsArticle
 from src.models import RssArticle
+from src.models.sql.news import News, Thumbnails, RelatedTickers, NewsSentiment
 from src.telemetry import capture_telemetry
 from src.utils import camel_to_snake, create_id
 from src.utils.my_logger import init_logger
@@ -26,7 +23,7 @@ async def save_to_local_drive(article: NewsArticle | RssArticle):
     :param article:
     :return:
     """
-    pickled_article = pickle.dumps(article)
+    _ = pickle.dumps(article)
     # TODO- learn how to save pickled classes to storage - or use a package that has the functionality
 
 
@@ -55,6 +52,9 @@ class DataConnector:
         :return:
         """
         pass
+
+    async def article_not_saved(self, article: dict):
+        return article.get('uuid') not in self._articles_present
 
     async def incoming_articles(self, article_list: list[dict[str, list[NewsArticle | RssArticle]]]):
         """
@@ -98,7 +98,7 @@ class DataConnector:
             initial_articles = len(self.mem_buffer)
             # create_article_tasks: list[sendArticleType] = [self.send_article_to_storage(article=article)
             #                                                for article in self.mem_buffer if article]
-            res = await self.send_to_database()
+            _ = await self.send_to_database()
             self.mem_buffer = []
             self._logger.info(f"Sent {initial_articles - len(self.mem_buffer)} Articles to storage backend")
         else:
@@ -152,10 +152,12 @@ class DataConnector:
             for i in range(0, len(self.mem_buffer), batch_size):
                 batch_articles: list[RssArticle | NewsArticle] = self.mem_buffer[i:i + batch_size]
                 news_instance_tasks = [self.create_news_instance(article) for article in batch_articles]
+                news_sentiment_tasks = [self.create_news_sentiment(article) for article in batch_articles]
                 thumbnail_instance_tasks = [self.create_thumbnails_instance(article) for article in batch_articles]
                 related_tickers_instance_tasks = [self.create_related_tickers(article) for article in batch_articles]
 
                 news_instances = await asyncio.gather(*news_instance_tasks)
+                sentiment_instances = await asyncio.gather(*news_sentiment_tasks)
                 thumbnail_instances = await asyncio.gather(*thumbnail_instance_tasks)
                 related_tickers_instances = await asyncio.gather(*related_tickers_instance_tasks)
                 error_occured = False
@@ -168,6 +170,13 @@ class DataConnector:
                         session.rollback()
 
                 if not error_occured:
+                    for news_sentiment in sentiment_instances:
+                        try:
+                            session.add(news_sentiment)
+                        except Exception as e:
+                            self._logger.info(f"exception Occurred : {e}")
+                            session.rollback()
+
                     for thumbnail_list in thumbnail_instances:
                         for thumbnail in thumbnail_list:
                             try:
@@ -185,7 +194,6 @@ class DataConnector:
                                 session.rollback()
 
                 self._logger.info(f"Batch Count : {i}")
-
             try:
                 session.flush()
             except Exception as e:
@@ -208,6 +216,19 @@ class DataConnector:
             self._logger.info(f"unable to create instance {str(e)}")
             return None
 
+    async def create_news_sentiment(self, article: RssArticle | NewsArticle) -> NewsSentiment:
+        """
+
+        :param article:
+        :return:
+        """
+        try:
+            return NewsSentiment(article_uuid=article.uuid, stock_codes=",".join(article.relatedTickers),
+                                 title=article.title, link=article.link, article=article.body,
+                                 article_tldr=article.summary)
+        except Exception as e:
+            self._logger.info(f"unable to create instance {str(e)}")
+            return None
 
     async def create_thumbnails_instance(self, article: RssArticle | NewsArticle) -> Thumbnails:
         """
@@ -224,7 +245,6 @@ class DataConnector:
         except Exception as e:
             self._logger.info(f"unable to create instance {str(e)}")
             return None
-
 
     async def create_related_tickers(self, article: RssArticle | NewsArticle) -> RelatedTickers:
         """
@@ -247,3 +267,6 @@ def create_auth_headers():
         'X-SECRET-TOKEN': config_instance().SERVICE_HEADERS.X_SECRET_TOKEN,
         'X-RapidAPI-Proxy-Secret': config_instance().SERVICE_HEADERS.X_RAPID_KEY
     }
+
+
+data_sink: DataConnector = DataConnector()

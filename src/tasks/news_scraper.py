@@ -3,6 +3,7 @@ import asyncio
 import yfinance as yf
 from bs4 import BeautifulSoup
 
+from src.connector.data_connector import data_sink
 from src.exceptions import ErrorParsingHTMLDocument
 from src.models import RssArticle, NewsArticle
 from src.tasks import request_session, download_article
@@ -10,6 +11,7 @@ from src.tasks.rss_feeds import parse_feeds
 from src.tasks.utils import switch_headers, cloud_flare_proxy
 from src.telemetry import capture_telemetry
 from src.utils.my_logger import init_logger
+
 
 news_scrapper_logger = init_logger('news-scrapper-logger')
 
@@ -71,15 +73,16 @@ async def ticker_articles(ticker: str) -> tuple[list[NewsArticle], str]:
             news_scrapper_logger.info(f'error parsing article: {str(e)}')
             continue
 
-        title, summary, body, images = await parse_article(article=_article)
+        if await data_sink.article_not_saved(article=article):
+            title, summary, body, images = await parse_article(article=_article)
+            # Note: funny way of catching parser errors but hey - beggars cant be choosers
+            if "not supported on your current browser version" not in summary.casefold():
+                _article.summary = summary
+            if "not supported on your current browser version" not in body.casefold():
+                _article.body = body
 
-        # Note: funny way of catching parser errors but hey - beggars cant be choosers
-        if "not supported on your current browser version" not in summary.casefold():
-            _article.summary = summary
-        if "not supported on your current browser version" not in body.casefold():
-            _article.body = body
+            articles.append(_article)
 
-        articles.append(_article)
     return articles, ticker
 
 
