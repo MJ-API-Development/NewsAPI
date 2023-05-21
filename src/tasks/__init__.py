@@ -21,19 +21,16 @@ from src.utils.my_logger import init_logger
 tasks_logger = init_logger('tasks-logger')
 
 request_session = CachedSession('finance_news.cache', use_cache_dir=True,
-                                cache_control=True,
+                                cache_control=False,
                                 # Use Cache-Control response headers for expiration, if available
-                                expire_after=timedelta(hours=3),
+                                expire_after=timedelta(minutes=30),
                                 # Otherwise expire responses after one day
                                 allowable_codes=[200, 400],
                                 # Cache 400 responses as a solemn reminder of your failures
                                 allowable_methods=['GET', 'POST'],
-                                # Cache whatever HTTP methods you want
-                                ignored_parameters=['api_key'],
-                                # Don't match this request param, and redact if from the cache
                                 match_headers=['Accept-Language'],
                                 # Cache a different response per language
-                                stale_if_error=True  # In case of request errors, use stale cache data if possible
+                                stale_if_error=False  # In case of request errors, use stale cache data if possible
                                 )
 
 
@@ -170,9 +167,9 @@ async def can_run_task(schedule_time: str, task_details) -> bool:
 
     # Calculate the difference between the schedule time and current time in minutes
     time_diff: int = abs(schedule_time.hour - current_time.hour) * 60 + abs(schedule_time.minute - current_time.minute)
-    tasks_logger.info(f"testing if we can run task : {time_diff - 600}")
+    tasks_logger.info(f"testing if we can run task : {time_diff - 10}")
     # Check if the time difference is less than or equal to 10 minutes and the task has not already run
-    return time_diff <= 10*60 and not task_details.task_ran
+    return time_diff <= 10 and not task_details.task_ran
 
 
 @capture_telemetry(name='get_meme_tickers')
