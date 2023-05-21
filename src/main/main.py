@@ -12,7 +12,6 @@ from src.tasks import can_run_task, get_meme_tickers
 from src.tasks.news_scraper import scrape_news_yahoo, alternate_news_sources
 from src.telemetry import Telemetry
 
-
 settings = config_instance().APP_SETTINGS
 app = FastAPI(
     title=settings.TITLE,
@@ -39,8 +38,6 @@ tasks_lookup: dict[str, Callable[[list[str]], scraperType]] = {
     'alternate_news_sources': alternate_news_sources,
 }
 
-
-
 telemetry: list[Telemetry] = []
 
 
@@ -59,7 +56,8 @@ async def scheduled_task() -> None:
         for schedule_time, task_details in list(scheduler_settings.schedule_times.items()):
             if await can_run_task(schedule_time=schedule_time, task_details=task_details):
                 # Select and Run task
-                articles: list[dict[str, NewsArticle | RssArticle]] = await tasks_lookup[task_details.name](tickers_list)
+                articles: list[dict[str, NewsArticle | RssArticle]] = await tasks_lookup[task_details.name](
+                    tickers_list)
 
                 print(f'RETURNING: {len(articles)} Articles to storage')
                 # prepare articles and store them into a buffer for sending to backend
@@ -70,7 +68,7 @@ async def scheduled_task() -> None:
                 task_details.task_ran = True
                 scheduler_settings.schedule_times[schedule_time] = task_details
                 # Sleep for 1 hour minutes
-                await asyncio.sleep(600*6)
+                await asyncio.sleep(600 * 6)
             # sleep one minute then run again
             await asyncio.sleep(6)
 
