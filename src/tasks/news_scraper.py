@@ -24,10 +24,8 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[NewsArtic
             chunk = tickers[i:i+chunk_size]
             tasks = [ticker_articles(ticker=ticker) for ticker in chunk]
             results = await asyncio.gather(*tasks)
-            for articles, ticker in zip(results, chunk):
-                if articles:
-                    articles_tickers.append({ticker: articles})
-            await asyncio.sleep(30)
+            articles_tickers = [{ticker: articles} for articles, ticker in zip(results, chunk) if articles is not None]
+            await asyncio.sleep(3)
 
         return articles_tickers
     except Exception as e:
@@ -47,8 +45,8 @@ async def ticker_articles(ticker: str) -> tuple[list[NewsArticle], str]:
 
     # noinspection PyBroadException
     try:
-        ticker = yf.Ticker(ticker=ticker.upper(), session=request_session)
-        news_data_list: list[dict[str, str | int | list[dict[str, str | int]]]] = ticker.news
+        _ticker = yf.Ticker(ticker=ticker.upper(), session=request_session)
+        news_data_list: list[dict[str, str | int | list[dict[str, str | int]]]] = _ticker.news
     except Exception as e:
         news_scrapper_logger.info(f'ticker articles error: {str(e)}')
         return [], ticker

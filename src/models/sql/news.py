@@ -1,4 +1,3 @@
-
 from datetime import datetime, time
 
 from dateutil.parser import parse, ParserError
@@ -82,6 +81,7 @@ class NewsSentiment(Base):
             # TODO need to log this error
             session.rollback()
             pass
+
 
 # noinspection DuplicatedCode
 def create_start_end_timestamps(_date: str) -> tuple[int, int]:
@@ -224,27 +224,44 @@ class RelatedTickers(Base, _News):
         latest_publish_time = session.query(func.max(News.providerPublishTime)).scalar()
         subquery = session.query(News.uuid).filter(News.providerPublishTime <= latest_publish_time).subquery()
         subquery_select = select(subquery.c.uuid)
+
         return session.query(cls).filter(cls.ticker == ticker, cls.uuid.in_(subquery_select)).join(News).order_by(
             News.providerPublishTime.desc()).limit(cls.article_page_size).all()
 
 
 # noinspection DuplicatedCode
 class News(Base, _News):
+    """
+        **News**
+            News
+    """
     __tablename__ = 'news'
     uuid: str = Column(String(255), primary_key=True)
     title: str = Column(String(255), index=True)
     publisher: str = Column(String(126), index=True)
     link: str = Column(String(255))
     providerPublishTime: int = Column(Integer)
+    created_at: int = Column(Integer)
     type: str = Column(String(32), index=True)
     sentiment = relationship('NewsSentiment', uselist=False, foreign_keys=[NewsSentiment.article_uuid], backref='news')
     tickers = relationship('RelatedTickers', uselist=True, foreign_keys=[RelatedTickers.uuid], backref='news')
     thumbnails = relationship('Thumbnails', uselist=True, foreign_keys=[Thumbnails.uuid], backref='news')
 
     def __init__(self, uuid: str, title: str, publisher: str, link: str, providerPublishTime: int, _type: str):
+        """
+            **__init__**
+
+        :param uuid:
+        :param title:
+        :param publisher:
+        :param link:
+        :param providerPublishTime:
+        :param _type:
+        """
         self.uuid = uuid
         self.title = title
         self.publisher = publisher
+        self.created_at = datetime.now().timestamp()
         self.link = link
         self.providerPublishTime = providerPublishTime
         self.type = _type
