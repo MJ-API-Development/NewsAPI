@@ -226,7 +226,7 @@ class RelatedTickers(Base, _News):
         subquery_select = select(subquery.c.uuid)
 
         return session.query(cls).filter(cls.ticker == ticker, cls.uuid.in_(subquery_select)).join(News).order_by(
-            News.providerPublishTime.desc()).limit(cls.article_page_size).all()
+            -News.providerPublishTime).limit(cls.article_page_size).all()
 
 
 # noinspection DuplicatedCode
@@ -277,6 +277,7 @@ class News(Base, _News):
             'publisher': self.publisher,
             'link': self.link,
             'providerPublishTime': self.providerPublishTime,
+            'created_at': self.created_at,
             'datetime_published': self.datetime_published,
             'type': self.type
         }
@@ -319,7 +320,7 @@ class News(Base, _News):
     @classmethod
     async def get_by_uuid_list(cls, uuid_list: list[str], session: sessionType):
         """Returns all articles matching the supplied uuid list, including sentiment relationship"""
-        return session.query(cls).options(joinedload(cls.sentiment)).options(joinedload(cls.tickers)).options(
+        return (session.query(cls).options(joinedload(cls.sentiment)).options(joinedload(cls.tickers)).options(
             joinedload(cls.thumbnails)).filter(cls.uuid.in_(uuid_list)).all() if isinstance(uuid_list, list) else []
 
     @classmethod
