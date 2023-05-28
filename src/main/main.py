@@ -11,6 +11,9 @@ from src.connector.data_connector import data_sink
 from src.tasks import can_run_task, get_meme_tickers
 from src.tasks.news_scraper import scrape_news_yahoo, alternate_news_sources
 from src.telemetry import Telemetry
+from src.utils.my_logger import init_logger
+
+main_logger = init_logger('Main Logger')
 ONE_HOURS = 60*60 * 1
 ONE_MINUTE = 60
 settings = config_instance().APP_SETTINGS
@@ -34,7 +37,7 @@ app = FastAPI(
 )
 scraperType: TypeAlias = Coroutine[list[str], None, list[dict[str, NewsArticle | RssArticle]]]
 
-tasks_lookup: dict[str, Callable[[list[str]], scraperType]] = {
+tasks_lookup= {
     'scrape_news_yahoo': scrape_news_yahoo,
     'alternate_news_sources': alternate_news_sources,
 }
@@ -57,12 +60,19 @@ async def scheduled_task() -> None:
         for schedule_time, task_details in list(scheduler_settings.schedule_times.items()):
 
             # Select and Run task
-            articles: list[dict[str, list[NewsArticle | RssArticle]]] = await scrape_news_yahoo(tickers_list)
-            print(f'RETURNING: {len(articles)} Articles to storage')
-            # prepare articles and store them into a buffer for sending to backend
-            await data_sink.incoming_articles(article_list=articles)
-            # send article to storage via articles API in Stock-API
-            await data_sink.mem_store_to_storage()
+            try:
+                articles: list[dict[str, list[NewsArticle | RssArticle]]] = await scrape_news_yahoo(tickers_list)
+                main_logger.info(f'RETURNING: {len(articles)} Articles to storage')
+            except Exception as e:
+                main_logger.info(str(e))
+                articles = []
+
+            if articles:
+                # prepare articles and store them into a buffer for sending to backend
+                await data_sink.incoming_articles(article_list=articles)
+                # send article to storage via database connection
+                await data_sink.mem_store_to_storage()
+
             # Mark task as completed by setting task_ran to True and then store back into scheduler
             task_details.task_ran = True
             scheduler_settings.schedule_times[schedule_time] = task_details

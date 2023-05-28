@@ -12,7 +12,6 @@ from src.tasks.utils import switch_headers, cloud_flare_proxy
 from src.telemetry import capture_telemetry
 from src.utils.my_logger import init_logger
 
-
 news_scrapper_logger = init_logger('news-scrapper-logger')
 
 
@@ -21,7 +20,7 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[NewsArtic
         articles_tickers = []
         chunk_size = 10
         for i in range(0, len(tickers), chunk_size):
-            chunk = tickers[i:i+chunk_size]
+            chunk = tickers[i:i + chunk_size]
             tasks = [ticker_articles(ticker=ticker) for ticker in chunk]
             results = await asyncio.gather(*tasks)
             articles_tickers = [{ticker: articles} for articles, ticker in zip(results, chunk) if articles is not None]
@@ -33,7 +32,7 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[NewsArtic
         return []
 
 
-async def ticker_articles(ticker: str) -> tuple[list[NewsArticle], str]:
+async def ticker_articles(ticker: str) -> tuple[list[NewsArticle], str] | None:
     """
         **ticker_articles**
             will return a list of articles for a single ticker
@@ -60,23 +59,23 @@ async def ticker_articles(ticker: str) -> tuple[list[NewsArticle], str]:
         if not isinstance(article, dict):
             continue
 
-        article['thumbnail'] = article.get('thumbnail', {}).get('resolutions', []) \
-            if 'thumbnail' in article and isinstance(article['thumbnail'], dict) else []
+        article['thumbnail'] = get_thumbnail_resolutions(article=article)
 
         # noinspection PyBroadException
         try:
             # NOTE: sometimes there is a strange list error here, don't know why honestly
-            _article: NewsArticle = NewsArticle(**article)
+            _article: NewsArticle | None = NewsArticle(**article)
         except Exception as e:
             news_scrapper_logger.info(f'error parsing article: {str(e)}')
-            continue
+            _article = None
 
         if await data_sink.article_not_saved(article=article):
             title, summary, body, images = await parse_article(article=_article)
+
             # Note: funny way of catching parser errors but hey - beggars cant be choosers
-            if "not supported on your current browser version" not in summary.casefold():
+            if summary and ("not supported on your current browser version" not in summary.casefold()):
                 _article.summary = summary
-            if "not supported on your current browser version" not in body.casefold():
+            if body and ("not supported on your current browser version" not in body.casefold()):
                 _article.body = body
 
             articles.append(_article)
@@ -84,9 +83,29 @@ async def ticker_articles(ticker: str) -> tuple[list[NewsArticle], str]:
     return articles, ticker
 
 
+def get_thumbnail_resolutions(article: dict[str, str, dict[str, str | int] | list]) -> list[dict[str, str | int]]:
+    """Gets the thumbnail resolutions for an article.
+
+  Args:
+    article: The article to get the thumbnail resolutions for.
+
+  Returns:
+    A list of thumbnail resolutions.
+  """
+
+    thumbnail = article.get('thumbnail')
+    if thumbnail is None:
+        return []
+
+    if not isinstance(thumbnail, dict):
+        return []
+
+    return thumbnail.get('resolutions', [])
+
+
 # noinspection PyUnusedLocal
 @capture_telemetry(name='alternate_news_sources')
-async def alternate_news_sources(*args, **kwargs) -> list[dict[str, RssArticle]]:
+async def alternate_news_sources(*args, **kwargs) -> list[dict[str, list[NewsArticle| RssArticle]]]:
     """
         **alternate_news_sources**
             search for news from alternate sources
@@ -116,7 +135,8 @@ async def alternate_news_sources(*args, **kwargs) -> list[dict[str, RssArticle]]
     return news
 
 
-async def parse_article(article: RssArticle) -> tuple[str | None, str | None, str | None, list[dict[str, str | int]]]:
+async def parse_article(article: RssArticle | NewsArticle | None) -> tuple[str | None, str | None, str | None,
+list[dict[str, str | int]]]:
     """**parse_article**
     will parse articles from yfinance
     """

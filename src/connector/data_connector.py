@@ -53,8 +53,8 @@ class DataConnector:
         """
         pass
 
-    async def article_not_saved(self, article: dict):
-        return article.get('uuid') not in self._articles_present
+    async def article_not_saved(self, article: dict) -> bool:
+        return isinstance(article, dict) and (article.get('uuid', "1234") not in self._articles_present)
 
     async def incoming_articles(self, article_list: list[dict[str, list[NewsArticle | RssArticle]]]):
         """
