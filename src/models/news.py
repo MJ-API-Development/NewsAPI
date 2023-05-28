@@ -1,6 +1,5 @@
 import uuid as _uuid
 from datetime import datetime
-
 from pydantic import BaseModel, Field
 
 

@@ -3,6 +3,8 @@ import pickle
 from typing import Coroutine, TypeAlias
 
 import aiohttp
+import pymysql
+from sqlalchemy.exc import IntegrityError
 
 from src.config import config_instance
 from src.connector.data_instance import mysql_instance
@@ -148,31 +150,51 @@ class DataConnector:
                 related_tickers_instances = await asyncio.gather(*[self.create_related_tickers(article)
                                                                    for article in batch_articles])
                 total_saved += batch_size
+
                 for instance in news_instances:
                     try:
                         session.add(instance)
-                    except Exception:
-                        self._logger.info(f"Exception Occurred When adding News Article")
+                    except IntegrityError:
+                        session.rollback()
+                        self._logger.info(f"Exception Occurred Data Integrity Error")
+                    except Exception as e:
+                        self._logger.info(f"Exception Occurred When adding News Article : {str(e)}")
 
                 for news_sentiment in sentiment_instances:
                     try:
                         session.add(news_sentiment)
-                    except Exception:
-                        self._logger.info(f"Exception Occurred When adding News Sentiment")
+
+                    except IntegrityError:
+                        session.rollback()
+                        self._logger.info(f"Exception Occurred Data Integrity Error")
+                    except Exception as e:
+                        self._logger.info(f"Exception Occurred When adding News Sentiment : {str(e)}")
 
                 for thumbnail_list in thumbnail_instances:
-                    for thumbnail in thumbnail_list:
-                        try:
-                            session.add(thumbnail)
-                        except Exception:
-                            self._logger.info(f"Exception Occurred when Adding Thumbnails")
+                    if thumbnail_list:
+                        for thumbnail in thumbnail_list:
+                            try:
+                                session.add(thumbnail)
+
+                            except IntegrityError:
+                                session.rollback()
+                                self._logger.info(f"Exception Occurred Data Integrity Error")
+
+                            except Exception:
+                                self._logger.info(f"Exception Occurred when Adding Thumbnails")
 
                 for tickers_list in related_tickers_instances:
-                    for ticker in tickers_list:
-                        try:
-                            session.add(ticker)
-                        except Exception:
-                            self._logger.info(f"Exception Occurred when adding Tickers")
+                    if tickers_list:
+                        for ticker in tickers_list:
+                            try:
+                                session.add(ticker)
+
+                            except IntegrityError:
+                                session.rollback()
+                                self._logger.info(f"Exception Occurred Data Integrity Error")
+
+                            except Exception:
+                                self._logger.info(f"Exception Occurred when adding Tickers")
 
                 self._logger.info(f"Batch Count : {i}")
             try:
@@ -221,11 +243,12 @@ class DataConnector:
         :return:
         """
         try:
-            return [Thumbnails(thumbnail_id=create_id(), uuid=str(article.uuid), url=thumb.get('url'),
-                               width=thumb.get('width'), height=thumb.get('height'), tag=thumb.get('tag')) for thumb in
-                    article.thumbnail]
-        except Exception:
-            self._logger.info(f"Unable to create instance Thumbnail Model")
+            return [Thumbnails(thumbnail_id=create_id(), uuid=str(article.uuid), url=thumb.url,
+                               width=thumb.width, height=thumb.height, tag=thumb.tag)
+                    for thumb in article.thumbnail]
+
+        except Exception as e:
+            self._logger.info(f"Unable to create instance Thumbnail Model : {str(e)}")
             return None
 
     async def create_related_tickers(self, article: RssArticle | NewsArticle) -> list[RelatedTickers] | None:
