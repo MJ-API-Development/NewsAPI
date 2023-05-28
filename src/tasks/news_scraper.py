@@ -139,8 +139,9 @@ async def parse_article(article: RssArticle | NewsArticle | None) -> tuple[str |
     if not article:
         return None, None, None
 
-    _html = await cloud_flare_proxy.make_request_with_cloudflare(url=article.link, method="GET")
     _headers = await switch_headers()
+
+    _html = await cloud_flare_proxy.make_request_with_cloudflare(url=article.link, method="GET")
     html = _html if _html is not None else await download_article(link=article.link, timeout=9600, headers=_headers)
     if html is None:
         return None, None, None
@@ -154,7 +155,7 @@ async def parse_article(article: RssArticle | NewsArticle | None) -> tuple[str |
         read_more_button = soup.find('div', class_='caas-readmore')
         if read_more_button:
             read_more_url = read_more_button.find('a')['href']
-            full_article_html = requests.get(read_more_url).text
+            full_article_html = await download_article(link=read_more_url, timeout=9600, headers=_headers)
             full_article_soup = BeautifulSoup(full_article_html, 'html.parser')
 
             # Append the paragraphs from the full article
