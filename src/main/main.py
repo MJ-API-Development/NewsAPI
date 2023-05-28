@@ -14,7 +14,8 @@ from src.telemetry import Telemetry
 from src.utils.my_logger import init_logger
 
 main_logger = init_logger('Main Logger')
-ONE_HOURS = 60*60 * 1
+# Extended Sleep Hours to 2 to prevent over using proxy server request allocations
+SLEEP_HOURS = 60*60 * 2
 ONE_MINUTE = 60
 settings = config_instance().APP_SETTINGS
 app = FastAPI(
@@ -78,7 +79,7 @@ async def scheduled_task() -> None:
             task_details.task_ran = True
             scheduler_settings.schedule_times[schedule_time] = task_details
             # Sleep for 1 hour minutes
-            await asyncio.sleep(ONE_HOURS)
+            await asyncio.sleep(SLEEP_HOURS)
             # sleep one minute then run again
             # await asyncio.sleep(ONE_MINUTE)
 

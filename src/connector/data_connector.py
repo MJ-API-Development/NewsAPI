@@ -46,12 +46,12 @@ class DataConnector:
         self.aio_session: aiohttp.ClientSession = aiohttp.ClientSession(headers=create_auth_headers())
         self._logger = init_logger(camel_to_snake(self.__class__.__name__))
 
-    def init(self):
+    def init(self, delay: int = 96):
         """
             prepare package and restore saved files from storage
         :return:
         """
-        pass
+        self._to_storage_delay = delay
 
     async def article_not_saved(self, article: dict) -> bool:
         return isinstance(article, dict) and (article.get('uuid', "1234") not in self._articles_present)
@@ -127,14 +127,14 @@ class DataConnector:
                 self._logger.error(f"Exception sending article to database : {str(e)}")
                 return article
 
-    async def send_to_database(self):
+    async def send_to_database(self, _batch_size: int = 20):
         """
             **send_to_database**
         :return:
         """
         with mysql_instance.get_session() as session:
             # process articles in groups of 20
-            batch_size: int = 20 if len(self.mem_buffer) > 20 else len(self.mem_buffer)
+            batch_size: int = _batch_size if len(self.mem_buffer) > _batch_size else len(self.mem_buffer)
             total_saved = 0
 
             for i in range(0, len(self.mem_buffer), batch_size):
