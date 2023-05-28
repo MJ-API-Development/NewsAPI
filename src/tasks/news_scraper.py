@@ -2,14 +2,12 @@ import asyncio
 import itertools
 import json
 
-import requests
-import yfinance as yf
 from bs4 import BeautifulSoup
 
 from src.connector.data_connector import data_sink
 from src.exceptions import ErrorParsingHTMLDocument
 from src.models import RssArticle, NewsArticle
-from src.tasks import request_session, download_article
+from src.tasks import download_article
 from src.tasks.rss_feeds import parse_feeds
 from src.tasks.utils import switch_headers, cloud_flare_proxy
 from src.telemetry import capture_telemetry
@@ -164,5 +162,4 @@ async def find_related_tickers(article: RssArticle) -> list[str]:
     :param article:
     :return:
     """
-
     return []
