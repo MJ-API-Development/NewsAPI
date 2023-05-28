@@ -1,5 +1,6 @@
 import asyncio
 import itertools
+import json
 
 import requests
 import yfinance as yf
@@ -40,14 +41,11 @@ async def ticker_articles(ticker: str) -> list[NewsArticle | RssArticle]:
     :param ticker:
     :return:
     """
-    _headers: dict[str, str] = await switch_headers()
-    # noinspection PyBroadException
+    url = f'https://query2.finance.yahoo.com/v1/finance/search?q={ticker}'
     try:
-        with requests.Session() as session:
-            session.headers = _headers
-            _ticker = yf.Ticker(ticker=ticker.upper(), session=session)
-
-        news_data_list: list[dict[str, str | int | list[dict[str, str | int]]]] = _ticker.news
+        response = await cloud_flare_proxy.make_request_with_cloudflare(url=url, method='GET')
+        data = json.loads(response)
+        news_data_list: list[dict[str, str | int | list[dict[str, str | int]]]] = data.get('news', [])
     except Exception as e:
         news_scrapper_logger.info(f'ticker articles error: {str(e)}')
         return []
