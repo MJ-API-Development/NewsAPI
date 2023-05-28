@@ -1,14 +1,14 @@
 import asyncio
-from typing import Callable, Coroutine, TypeAlias
+from typing import Coroutine, TypeAlias
 
 from fastapi import FastAPI
 
-from src.models import NewsArticle, RssArticle
 from src.api_routes.admin import admin_router
 from src.api_routes.telemetry import telemetry_router
 from src.config import scheduler_settings, create_schedules, config_instance
 from src.connector.data_connector import data_sink
-from src.tasks import can_run_task, get_meme_tickers
+from src.models import NewsArticle, RssArticle
+from src.tasks import get_meme_tickers
 from src.tasks.news_scraper import scrape_news_yahoo, alternate_news_sources
 from src.telemetry import Telemetry
 from src.utils.my_logger import init_logger

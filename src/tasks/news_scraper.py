@@ -1,4 +1,5 @@
 import asyncio
+import itertools
 
 import yfinance as yf
 from bs4 import BeautifulSoup
@@ -15,7 +16,7 @@ from src.utils.my_logger import init_logger
 news_scrapper_logger = init_logger('news-scrapper-logger')
 
 
-async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[NewsArticle | RssArticle]]]:
+async def scrape_news_yahoo(tickers: list[str]) -> list[NewsArticle | RssArticle]:
     try:
         articles_tickers = []
         chunk_size = 10
@@ -23,16 +24,15 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[dict[str, list[NewsArtic
             chunk = tickers[i:i + chunk_size]
             tasks = [ticker_articles(ticker=ticker) for ticker in chunk]
             results = await asyncio.gather(*tasks)
-            articles_tickers = [{ticker: articles} for articles, ticker in zip(results, chunk) if articles is not None]
-            await asyncio.sleep(3)
+            articles_tickers = [articles for articles in results if articles is not None]
 
-        return articles_tickers
+        return list(itertools.chain(*articles_tickers))
     except Exception as e:
         print(f"Exception raised: {e}")
         return []
 
 
-async def ticker_articles(ticker: str) -> tuple[list[NewsArticle], str] | None:
+async def ticker_articles(ticker: str) -> list[NewsArticle | RssArticle]:
     """
         **ticker_articles**
             will return a list of articles for a single ticker
@@ -48,7 +48,7 @@ async def ticker_articles(ticker: str) -> tuple[list[NewsArticle], str] | None:
         news_data_list: list[dict[str, str | int | list[dict[str, str | int]]]] = _ticker.news
     except Exception as e:
         news_scrapper_logger.info(f'ticker articles error: {str(e)}')
-        return [], ticker
+        return []
 
     articles = []
 
@@ -80,7 +80,7 @@ async def ticker_articles(ticker: str) -> tuple[list[NewsArticle], str] | None:
 
             articles.append(_article)
 
-    return articles, ticker
+    return articles
 
 
 def get_thumbnail_resolutions(article: dict[str, str, dict[str, str | int] | list]) -> list[dict[str, str | int]]:
