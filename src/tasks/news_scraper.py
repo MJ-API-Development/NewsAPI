@@ -149,18 +149,19 @@ list[dict[str, str | int]]]:
     if html is None:
         return None, None, None, []
     try:
+
         soup = BeautifulSoup(html, 'html.parser')
-        title: str = soup.find('h1').get_text()
+        title: str = soup.find('h1').get_text() or soup.find('h2').get_text()
         summary: str = soup.find('p').get_text()
         body: str = ''
         images: list[dict[str, str | int]] = []
-        for elem in soup.select('div.article-content > *'):
-            if elem.name == 'h1':
-                title = elem.get_text()
-            if elem.name == 'p':
-                body += elem.get_text()
-            elif elem.name == 'img':
-                images.append(dict(src=elem['src'], alt=elem['alt'], width=elem['width'], height=elem['height']))
+
+        for elem in soup.find_all('p'):
+            body += elem.get_text()
+
+        for elem in soup.find_all('img'):
+            images.append(dict(src=elem['src'], alt=elem['alt'], width=elem['width'], height=elem['height']))
+
         return title, summary, body, images
     except Exception:
         raise ErrorParsingHTMLDocument()

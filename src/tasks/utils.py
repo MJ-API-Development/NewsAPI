@@ -80,7 +80,7 @@ class CloudflareProxy:
                 async with session.get(url=request_url, timeout=96) as response:
                     response.raise_for_status()
                     if response.headers.get('Content-Type') == 'application/json':
-                        return response.json()
+                        return await response.json()
                     return await response.text()
         except (aiohttp.ClientError, asyncio.TimeoutError):
             self.error_count += 1
