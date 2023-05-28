@@ -41,8 +41,6 @@ async def ticker_articles(ticker: str) -> list[NewsArticle | RssArticle]:
     :return:
     """
     _headers: dict[str, str] = await switch_headers()
-    request_session.headers.update(_headers)
-
     # noinspection PyBroadException
     try:
         with requests.Session() as session:
