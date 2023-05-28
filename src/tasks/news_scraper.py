@@ -16,10 +16,10 @@ from src.utils.my_logger import init_logger
 news_scrapper_logger = init_logger('news-scrapper-logger')
 
 
-async def scrape_news_yahoo(tickers: list[str]) -> list[NewsArticle | RssArticle]:
+async def scrape_news_yahoo(tickers: list[str], _chunk_size: int = 10) -> list[NewsArticle | RssArticle]:
     try:
         articles_tickers = []
-        chunk_size = 10 if len(tickers) > 10 else len(tickers)
+        chunk_size = _chunk_size if len(tickers) > _chunk_size else len(tickers)
 
         for i in range(0, len(tickers), chunk_size):
             chunk = tickers[i:i + chunk_size]
@@ -102,13 +102,13 @@ def get_thumbnail_resolutions(article: dict[str, str, dict[str, str | int] | lis
 
 # noinspection PyUnusedLocal
 @capture_telemetry(name='alternate_news_sources')
-async def alternate_news_sources(*args, **kwargs) -> list[NewsArticle| RssArticle]:
+async def alternate_news_sources(*args, **kwargs) -> list[NewsArticle | RssArticle]:
     """
         **alternate_news_sources**
             search for news from alternate sources
     :return:
     """
-    articles_list: list[NewsArticle| RssArticle] = await parse_feeds()
+    articles_list: list[NewsArticle | RssArticle] = await parse_feeds()
     for i, article in enumerate(articles_list):
         try:
             title, summary, body = await parse_article(article)
