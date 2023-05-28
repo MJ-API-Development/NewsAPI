@@ -10,6 +10,7 @@ class Thumbnail(BaseModel):
     height: int
     tag: str
 
+
 # noinspection PyMethodParameters
 class NewsArticle(BaseModel):
     """
@@ -39,4 +40,3 @@ class NewsArticle(BaseModel):
 
     class Config:
         title = "YFinance Article Model"
-

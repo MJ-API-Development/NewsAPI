@@ -38,7 +38,6 @@ class MYSQLDatabase:
     @classmethod
     def create_engine(cls, db_url: str):
         """
-            db_url = 'mysql+pymysql://root:11111111@localhost:3306/eod-api'
         :param db_url:
         :return:
         """
