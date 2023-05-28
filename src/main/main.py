@@ -79,6 +79,7 @@ async def scheduled_task() -> None:
             task_details.task_ran = True
             scheduler_settings.schedule_times[schedule_time] = task_details
             # Sleep for 1 hour minutes
+            main_logger.info(f'Sleeping for : {SLEEP_HOURS/(60*60)} Hours')
             await asyncio.sleep(SLEEP_HOURS)
             # sleep one minute then run again
             # await asyncio.sleep(ONE_MINUTE)
