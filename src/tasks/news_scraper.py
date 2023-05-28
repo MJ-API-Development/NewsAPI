@@ -129,9 +129,6 @@ async def alternate_news_sources(*args, **kwargs) -> list[NewsArticle | RssArtic
     return articles_list
 
 
-import requests
-
-
 async def parse_article(article: RssArticle | NewsArticle | None) -> tuple[str | None, str | None, str | None]:
     """**parse_article**
     will parse articles from yfinance
