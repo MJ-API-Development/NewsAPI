@@ -57,12 +57,17 @@ async def ticker_articles(ticker: str) -> list[NewsArticle | RssArticle]:
 
         if not isinstance(article, dict):
             continue
-        article['thumbnail'] = get_thumbnail_resolutions(article=article)
+
+        # article['thumbnail'] = get_thumbnail_resolutions(article=article)
+        article.update({'thumbnail': get_thumbnail_resolutions(article=article)})
         # noinspection PyBroadException
         try:
             # NOTE: sometimes there is a strange list error here, don't know why honestly
-            _article: NewsArticle | None = NewsArticle(**dict(article))
+
+            # print(article)
+            _article: NewsArticle | None = NewsArticle(**article)
         except Exception as e:
+            print(article)
             news_scrapper_logger.info(f'Error Creating NewsArticle: {str(e)}')
             _article = None
 

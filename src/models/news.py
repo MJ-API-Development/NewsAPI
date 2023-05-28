@@ -4,6 +4,12 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
+class Thumbnail(BaseModel):
+    url: str
+    width: int
+    height: int
+    tag: str
+
 # noinspection PyMethodParameters
 class NewsArticle(BaseModel):
     """
@@ -16,8 +22,8 @@ class NewsArticle(BaseModel):
     link: str
     providerPublishTime: int = Field(default_factory=lambda: int(datetime.now().timestamp()))
     type: str = Field(default='Story')
-    thumbnail: list[dict[str, str | int]] | None = Field(default_factory=[])
-    relatedTickers: list[str] = Field(default_factory=[])
+    thumbnail: list[Thumbnail] | None
+    relatedTickers: list[str] | None
 
     summary: str | None
     body: str | None
