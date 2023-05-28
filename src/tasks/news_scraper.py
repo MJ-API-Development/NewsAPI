@@ -61,7 +61,7 @@ async def ticker_articles(ticker: str) -> list[NewsArticle | RssArticle]:
         # noinspection PyBroadException
         try:
             # NOTE: sometimes there is a strange list error here, don't know why honestly
-            _article: NewsArticle | None = NewsArticle(**article)
+            _article: NewsArticle | None = NewsArticle(**dict(article))
         except Exception as e:
             news_scrapper_logger.info(f'Error Creating NewsArticle: {str(e)}')
             _article = None
