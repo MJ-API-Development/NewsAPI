@@ -56,7 +56,7 @@ class DataConnector:
     async def article_not_saved(self, article: dict) -> bool:
         return isinstance(article, dict) and (article.get('uuid', "1234") not in self._articles_present)
 
-    async def incoming_articles(self, article_list: list[dict[str, list[NewsArticle | RssArticle]]]):
+    async def incoming_articles(self, article_list: list[NewsArticle | RssArticle]):
         """
         **incoming_articles**
             :param article_list:
@@ -66,20 +66,20 @@ class DataConnector:
             return
 
         # Destructuring articles
-        extended_articles = [article_dict.values() for article_dict in article_list if article_dict is not None]
-
-        normalized_list = []
-        for news_articles in extended_articles:
-            articles, ticker = news_articles
-            if isinstance(articles, list):
-                normalized_list.extend(articles)
-
-        self._logger.info(f"Incoming Article Batches : {len(normalized_list)}")
-
-        for article in normalized_list:
-            if article and article.uuid not in self._articles_present:
+        # extended_articles = [article_dict.values() for article_dict in article_list if article_dict is not None]
+        #
+        # normalized_list = []
+        # for news_articles in extended_articles:
+        #     articles, ticker = news_articles
+        #     if isinstance(articles, list):
+        #         normalized_list.extend(articles)
+        #
+        # self._logger.info(f"Incoming Article Batches : {len(normalized_list)}")
+        #
+        for article in article_list:
+            if article and str(article.uuid) not in self._articles_present:
                 self.mem_buffer.append(article)
-                self._articles_present.add(article.uuid)
+                self._articles_present.add(str(article.uuid))
 
         self._logger.info(f"Done prepping articles batch for sending to storage")
         self._logger.info(f"Total Articles Prepped : {len(self.mem_buffer)}")

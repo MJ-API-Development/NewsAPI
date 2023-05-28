@@ -24,7 +24,7 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[NewsArticle | RssArticle
             chunk = tickers[i:i + chunk_size]
             tasks = [ticker_articles(ticker=ticker) for ticker in chunk]
             results = await asyncio.gather(*tasks)
-            articles_tickers = [articles for articles in results if articles is not None]
+            articles_tickers.extend([articles for articles in results if articles is not None])
 
         return list(itertools.chain(*articles_tickers))
     except Exception as e:
