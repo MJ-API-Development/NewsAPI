@@ -59,7 +59,7 @@ class CloudflareProxy:
     async def create_request_endpoint(self) -> str:
         return f"{self.api_endpoint}/zones/{self.zone_id}/workers/scripts/{self.worker_name}/fetch"
 
-    @capture_telemetry(name='make_request_with_cloudflare')
+    # @capture_telemetry(name='make_request_with_cloudflare')
     async def make_request_with_cloudflare(self, url: str, method: str):
         """
             **make_request_with_cloudflare**
@@ -78,9 +78,12 @@ class CloudflareProxy:
 
             async with aiohttp.ClientSession(headers=headers) as session:
                 async with session.get(url=request_url, timeout=96) as response:
+                    # print(response)
                     response.raise_for_status()
                     if response.headers.get('Content-Type') == 'application/json':
-                        return await response.json()
+                        data = await response.json()
+                        print(data)
+                        return data
                     return await response.text()
         except (aiohttp.ClientError, asyncio.TimeoutError):
             self.error_count += 1

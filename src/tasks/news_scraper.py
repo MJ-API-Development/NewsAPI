@@ -21,7 +21,8 @@ news_scrapper_logger = init_logger('news-scrapper-logger')
 async def scrape_news_yahoo(tickers: list[str]) -> list[NewsArticle | RssArticle]:
     try:
         articles_tickers = []
-        chunk_size = 10
+        chunk_size = 10 if len(tickers) > 10 else len(tickers)
+
         for i in range(0, len(tickers), chunk_size):
             chunk = tickers[i:i + chunk_size]
             tasks = [ticker_articles(ticker=ticker) for ticker in chunk]
@@ -30,7 +31,7 @@ async def scrape_news_yahoo(tickers: list[str]) -> list[NewsArticle | RssArticle
 
         return list(itertools.chain(*articles_tickers))
     except Exception as e:
-        print(f"Exception raised: {e}")
+        news_scrapper_logger.info(f"Exception raised: {str(e)}")
         return []
 
 
@@ -44,8 +45,7 @@ async def ticker_articles(ticker: str) -> list[NewsArticle | RssArticle]:
     url = f'https://query2.finance.yahoo.com/v1/finance/search?q={ticker}'
     try:
         response = await cloud_flare_proxy.make_request_with_cloudflare(url=url, method='GET')
-        data = json.loads(response)
-        news_data_list: list[dict[str, str | int | list[dict[str, str | int]]]] = data.get('news', [])
+        news_data_list: list[dict[str, str | int | list[dict[str, str | int]]]] = json.loads(response).get('news', [])
     except Exception as e:
         news_scrapper_logger.info(f'ticker articles error: {str(e)}')
         return []
@@ -66,19 +66,22 @@ async def ticker_articles(ticker: str) -> list[NewsArticle | RssArticle]:
             # NOTE: sometimes there is a strange list error here, don't know why honestly
             _article: NewsArticle | None = NewsArticle(**article)
         except Exception as e:
-            news_scrapper_logger.info(f'error parsing article: {str(e)}')
+            news_scrapper_logger.info(f'error creating NewsArticle: {str(e)}')
             _article = None
 
-        if await data_sink.article_not_saved(article=article):
-            title, summary, body, images = await parse_article(article=_article)
+        if _article and await data_sink.article_not_saved(article=article):
+            try:
+                title, summary, body = await parse_article(article=_article)
+                # Note: funny way of catching parser errors but hey - beggars cant be choosers
+                if summary and ("not supported on your current browser version" not in summary.casefold()):
+                    _article.summary = summary
+                if body and ("not supported on your current browser version" not in body.casefold()):
+                    _article.body = body
 
-            # Note: funny way of catching parser errors but hey - beggars cant be choosers
-            if summary and ("not supported on your current browser version" not in summary.casefold()):
-                _article.summary = summary
-            if body and ("not supported on your current browser version" not in body.casefold()):
-                _article.body = body
+                articles.append(_article)
 
-            articles.append(_article)
+            except Exception as e:
+                news_scrapper_logger.info(f'error parsing article: {str(e)}')
 
     return articles
 
@@ -96,10 +99,8 @@ def get_thumbnail_resolutions(article: dict[str, str, dict[str, str | int] | lis
     thumbnail = article.get('thumbnail')
     if thumbnail is None:
         return []
-
     if not isinstance(thumbnail, dict):
         return []
-
     return thumbnail.get('resolutions', [])
 
 
@@ -115,18 +116,17 @@ async def alternate_news_sources(*args, **kwargs) -> list[dict[str, list[NewsArt
     news = []
     for i, article in enumerate(articles_list):
         try:
-            title, summary, body, images = await parse_article(article)
+            title, summary, body = await parse_article(article)
         except TypeError:
             raise ErrorParsingHTMLDocument()
         # NOTE - probably nothing to lose sleep over, but if an article does not
         # have images it won't be saved
-        if not all([summary, body, images]):
+        if not all([summary, body]):
             continue
 
         _related_tickers = await find_related_tickers(article)
         article.body = body
         article.summary = summary
-        article.thumbnail = images
         article.title = title
         article.relatedTickers = _related_tickers
         articles_list[i] = article
@@ -135,34 +135,30 @@ async def alternate_news_sources(*args, **kwargs) -> list[dict[str, list[NewsArt
     return news
 
 
-async def parse_article(article: RssArticle | NewsArticle | None) -> tuple[str | None, str | None, str | None,
-list[dict[str, str | int]]]:
+async def parse_article(article: RssArticle | NewsArticle | None) -> tuple[str | None, str | None, str | None]:
     """**parse_article**
     will parse articles from yfinance
     """
     if not article:
-        return None, None, None, []
+        return None, None, None
 
     _html = await cloud_flare_proxy.make_request_with_cloudflare(url=article.link, method="GET")
     _headers = await switch_headers()
     html = _html if _html is not None else await download_article(link=article.link, timeout=9600, headers=_headers)
     if html is None:
-        return None, None, None, []
+        return None, None, None
     try:
 
         soup = BeautifulSoup(html, 'html.parser')
         title: str = soup.find('h1').get_text() or soup.find('h2').get_text()
         summary: str = soup.find('p').get_text()
         body: str = ''
-        images: list[dict[str, str | int]] = []
-
-        for elem in soup.find_all('p'):
-            body += elem.get_text()
-
-        for elem in soup.find_all('img'):
-            images.append(dict(src=elem['src'], alt=elem['alt'], width=elem['width'], height=elem['height']))
-
-        return title, summary, body, images
+        try:
+            for elem in soup.find_all('p'):
+                body += elem.get_text()
+        except Exception as e:
+            pass
+        return title, summary, body
     except Exception:
         raise ErrorParsingHTMLDocument()
 
