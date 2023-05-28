@@ -13,19 +13,15 @@ sessionType = Session
 
 
 class MYSQLDatabase:
-    """Base class for data models."""
+    """Base class for database connection."""
 
     def __init__(self, database_url: str | None = None):
         self.settings = config_instance().DATABASE_SETTINGS
         self._logger = init_logger(camel_to_snake(self.__class__.__name__))
-        # self.engine = self.create_engine(db_url=scheduler_settings.SQL_DB_URL)
         try:
             db_url = database_url or self.settings.SQL_DB_URL
             self.engine = create_engine(url=db_url)
-
-            session_gen = self.session_generator()
-            # self.get_session = next(session_gen)
-            self.get_session: Session = self.create_session(self.engine)
+            self.get_session: sessionmaker = self.create_session(self.engine)
             config_instance().DEBUG and self._logger.info(f"Connected to database : {db_url}")
         except OperationalError:
             config_instance().DEBUG and self._logger.error("Unable to connect to MYSQL Database")
@@ -36,7 +32,7 @@ class MYSQLDatabase:
                 yield _session
 
     # noinspection PyUnusedLocal
-    def create_session(self, engine) -> Session:
+    def create_session(self, engine) -> sessionmaker:
         return sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
 
     @classmethod

@@ -65,17 +65,6 @@ class DataConnector:
         if not article_list:
             return
 
-        # Destructuring articles
-        # extended_articles = [article_dict.values() for article_dict in article_list if article_dict is not None]
-        #
-        # normalized_list = []
-        # for news_articles in extended_articles:
-        #     articles, ticker = news_articles
-        #     if isinstance(articles, list):
-        #         normalized_list.extend(articles)
-        #
-        # self._logger.info(f"Incoming Article Batches : {len(normalized_list)}")
-        #
         for article in article_list:
             if article and str(article.uuid) not in self._articles_present:
                 self.mem_buffer.append(article)
