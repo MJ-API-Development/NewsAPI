@@ -20,7 +20,7 @@ from src.utils.my_logger import init_logger
 
 tasks_logger = init_logger('tasks-logger')
 
-request_session = CachedSession('finance_news.cache', use_cache_dir=True,
+request_session = CachedSession('finance_news.cache', use_cache_dir=False,
                                 cache_control=False,
                                 # Use Cache-Control response headers for expiration, if available
                                 expire_after=timedelta(minutes=30),

@@ -1,6 +1,7 @@
 import asyncio
 import itertools
 
+import requests
 import yfinance as yf
 from bs4 import BeautifulSoup
 
@@ -44,7 +45,10 @@ async def ticker_articles(ticker: str) -> list[NewsArticle | RssArticle]:
 
     # noinspection PyBroadException
     try:
-        _ticker = yf.Ticker(ticker=ticker.upper(), session=request_session)
+        with requests.Session() as session:
+            session.headers = _headers
+            _ticker = yf.Ticker(ticker=ticker.upper(), session=session)
+
         news_data_list: list[dict[str, str | int | list[dict[str, str | int]]]] = _ticker.news
     except Exception as e:
         news_scrapper_logger.info(f'ticker articles error: {str(e)}')

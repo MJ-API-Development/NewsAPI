@@ -158,7 +158,7 @@ class DataConnector:
                                                              for article in batch_articles])
                 related_tickers_instances = await asyncio.gather(*[self.create_related_tickers(article)
                                                                    for article in batch_articles])
-
+                total_saved += batch_size
                 for instance in news_instances:
                     try:
                         session.add(instance)
@@ -188,8 +188,9 @@ class DataConnector:
                 self._logger.info(f"Batch Count : {i}")
             try:
                 session.flush()
-            except Exception:
+            except Exception as e:
                 self._logger.info(f"Exception Occurred When Flushing")
+                self._logger.info(str(e))
 
             self._logger.info(f"Overall Articles Saved : {total_saved}")
 
