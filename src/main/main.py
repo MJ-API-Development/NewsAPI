@@ -51,6 +51,7 @@ async def scheduled_task() -> None:
             startup tasks for running schedules
     :return:
     """
+    # TODO once i can get more requests allocation per day i should include all Ticker Symbols
     meme_tickers: dict[str, str] = await get_meme_tickers()
     # this counter helps refresh the meme tickers every hour - its based on the wait time not run time
     while True:
@@ -63,7 +64,6 @@ async def scheduled_task() -> None:
             try:
                 articles: list[NewsArticle | RssArticle] = await scrape_news_yahoo(tickers_list)
                 main_logger.info(f'RETURNING: {len(articles)} Articles to storage')
-
             except Exception as e:
                 main_logger.info(str(e))
                 articles = []

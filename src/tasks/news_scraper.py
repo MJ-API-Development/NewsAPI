@@ -42,12 +42,13 @@ async def ticker_articles(ticker: str) -> list[NewsArticle | RssArticle]:
     :param ticker:
     :return:
     """
+    # Yahoo finance query api
     url = f'https://query2.finance.yahoo.com/v1/finance/search?q={ticker}'
     try:
         response = await cloud_flare_proxy.make_request_with_cloudflare(url=url, method='GET')
         news_data_list: list[dict[str, str | int | list[dict[str, str | int]]]] = json.loads(response).get('news', [])
     except Exception as e:
-        news_scrapper_logger.info(f'ticker articles error: {str(e)}')
+        news_scrapper_logger.info(f'Ticker Articles Error: {str(e)}')
         return []
 
     articles = []
@@ -58,15 +59,13 @@ async def ticker_articles(ticker: str) -> list[NewsArticle | RssArticle]:
 
         if not isinstance(article, dict):
             continue
-
         article['thumbnail'] = get_thumbnail_resolutions(article=article)
-
         # noinspection PyBroadException
         try:
             # NOTE: sometimes there is a strange list error here, don't know why honestly
             _article: NewsArticle | None = NewsArticle(**article)
         except Exception as e:
-            news_scrapper_logger.info(f'error creating NewsArticle: {str(e)}')
+            news_scrapper_logger.info(f'Error Creating NewsArticle: {str(e)}')
             _article = None
 
         if _article and await data_sink.article_not_saved(article=article):
@@ -88,14 +87,11 @@ async def ticker_articles(ticker: str) -> list[NewsArticle | RssArticle]:
 
 def get_thumbnail_resolutions(article: dict[str, str, dict[str, str | int] | list]) -> list[dict[str, str | int]]:
     """Gets the thumbnail resolutions for an article.
-
   Args:
     article: The article to get the thumbnail resolutions for.
-
   Returns:
     A list of thumbnail resolutions.
   """
-
     thumbnail = article.get('thumbnail')
     if thumbnail is None:
         return []
@@ -106,14 +102,13 @@ def get_thumbnail_resolutions(article: dict[str, str, dict[str, str | int] | lis
 
 # noinspection PyUnusedLocal
 @capture_telemetry(name='alternate_news_sources')
-async def alternate_news_sources(*args, **kwargs) -> list[dict[str, list[NewsArticle| RssArticle]]]:
+async def alternate_news_sources(*args, **kwargs) -> list[NewsArticle| RssArticle]:
     """
         **alternate_news_sources**
             search for news from alternate sources
     :return:
     """
-    articles_list: list[RssArticle] = await parse_feeds()
-    news = []
+    articles_list: list[NewsArticle| RssArticle] = await parse_feeds()
     for i, article in enumerate(articles_list):
         try:
             title, summary, body = await parse_article(article)
@@ -131,8 +126,7 @@ async def alternate_news_sources(*args, **kwargs) -> list[dict[str, list[NewsArt
         article.relatedTickers = _related_tickers
         articles_list[i] = article
 
-    news.append({'alt': articles_list})
-    return news
+    return articles_list
 
 
 async def parse_article(article: RssArticle | NewsArticle | None) -> tuple[str | None, str | None, str | None]:
@@ -148,11 +142,10 @@ async def parse_article(article: RssArticle | NewsArticle | None) -> tuple[str |
     if html is None:
         return None, None, None
     try:
-
         soup = BeautifulSoup(html, 'html.parser')
         title: str = soup.find('h1').get_text() or soup.find('h2').get_text()
         summary: str = soup.find('p').get_text()
-        body: str = ''
+        body: str | None = None
         try:
             for elem in soup.find_all('p'):
                 body += elem.get_text()

@@ -172,30 +172,13 @@ async def can_run_task(schedule_time: str, task_details) -> bool:
 
 
 @capture_telemetry(name='get_meme_tickers')
-async def get_meme_tickers(count: int = 150, offset: int = 0) -> dict[str, str]:
+async def get_meme_tickers(count: int = 300, offset: int = 0) -> dict[str, str]:
     """
     Returns a dictionary of ticker symbols and company names for Mexican stocks.
     :return: A dictionary of ticker symbols and company names for Mexican stocks.
     """
-    url = f"{config_instance().MEME_TICKERS_URI}?count={count}&offset={offset}"
-    headers = await switch_headers()
-    try:
-        request_session.headers = headers
-        response = request_session.get(url)
-    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
-        return dict()
 
-    soup = BeautifulSoup(response.content, "html.parser")
-    tickers = {}
-
-    for row in soup.find_all("tbody")[0].find_all("tr"):
-        cells = row.find_all("td")
-        symbol = cells[0].text.strip()
-        name = cells[1].text.strip()
-        tickers[symbol] = name
-
-    tasks_logger.info(tickers)
-    _present_tickers = set(tickers.keys())
+    _present_tickers, tickers = await sub_query_tickers(count=count, offset=offset)
 
     for _ticker, name in list(get_meme_tickers_us().items()):
         if _ticker not in _present_tickers:
@@ -211,8 +194,32 @@ async def get_meme_tickers(count: int = 150, offset: int = 0) -> dict[str, str]:
         if _ticker not in _present_tickers:
             tickers[_ticker] = name
             _present_tickers.add(_ticker)
+
     tasks_logger.info(f"Total tickers found : {len(tickers)}")
     return tickers
+
+
+async def sub_query_tickers(count: int = 300, offset: int = 0) -> tuple[set[str], dict[str, str]]:
+    url = f"{config_instance().MEME_TICKERS_URI}?count={count}&offset={offset}"
+    headers = await switch_headers()
+    try:
+        request_session.headers = headers
+        response = request_session.get(url)
+    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+        return set(), dict()
+
+    soup = BeautifulSoup(response.content, "html.parser")
+    tickers = {}
+
+    for row in soup.find_all("tbody")[0].find_all("tr"):
+        cells = row.find_all("td")
+        symbol = cells[0].text.strip()
+        name = cells[1].text.strip()
+        tickers[symbol] = name
+
+    tasks_logger.info(tickers)
+    _present_tickers = set(tickers.keys())
+    return _present_tickers, tickers
 
 
 def get_meme_tickers_us() -> dict[str, str]:
