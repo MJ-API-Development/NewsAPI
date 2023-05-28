@@ -30,7 +30,7 @@ request_session = CachedSession('finance_news.cache', use_cache_dir=True,
                                 allowable_methods=['GET', 'POST'],
                                 match_headers=['Accept-Language'],
                                 # Cache a different response per language
-                                stale_if_error=False  # In case of request errors, use stale cache data if possible
+                                stale_if_error=True  # In case of request errors, use stale cache data if possible
                                 )
 
 
@@ -48,7 +48,7 @@ async def get_exchange_tickers(exchange_code: str) -> list[Stock]:
     response.raise_for_status()
 
     if response.headers.get('Content-Type') == 'application/json':
-        response_data: dict[str, str | bool | dict[str, str]] = response.json()
+        response_data: dict[str, str | bool | dict[str, str] | list[dict[str, str]]] = response.json()
         if response_data.get('status', False):
             stocks_list: list[dict[str, str]] = response_data.get('payload')
 
@@ -70,7 +70,7 @@ async def get_exchange_lists() -> list[Exchange]:
     response.raise_for_status()
 
     if response.headers.get('Content-Type') == 'application/json':
-        response_data: dict[str, str | bool | dict[str, str]] = response.json()
+        response_data: dict[str, str | bool | dict[str, str] | list[dict[str, str]]] = response.json()
         if response_data.get('status', False):
             exchange_list: list[dict[str, str]] = response_data.get('payload')
 
@@ -122,7 +122,7 @@ async def do_soup(html) -> tuple[str, str]:
 
 
 @capture_telemetry(name='download_article')
-async def download_article(link: str, timeout: int, headers: dict[str, str]) -> tuple[str, str] | tuple[None, str]:
+async def download_article(link: str, timeout: int, headers: dict[str, str]) -> str | None:
     """
     **download_article**
         Download the article from the link stored in news_sentiment.link,
@@ -133,8 +133,7 @@ async def download_article(link: str, timeout: int, headers: dict[str, str]) -> 
         async with aiohttp.ClientSession(headers=headers) as session:
             async with session.get(url=link, timeout=timeout) as response:
                 response.raise_for_status()
-                text: str = await response.text()
-                return text
+                return await response.text()
     except (aiohttp.ClientError, asyncio.TimeoutError):
         raise RequestError()
 

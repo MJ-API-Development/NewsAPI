@@ -67,20 +67,18 @@ class DataConnector:
 
         # Destructuring articles
         extended_articles = [article_dict.values() for article_dict in article_list if article_dict is not None]
-        normalized_list = [articles for articles, ticker in extended_articles if isinstance(articles, list)]
 
-        # for news_articles in extended_articles:
-        #     articles, ticker = news_articles
-        #     if isinstance(articles, list):
-        #         normalized_list.extend(articles)
+        normalized_list = []
+        for news_articles in extended_articles:
+            articles, ticker = news_articles
+            if isinstance(articles, list):
+                normalized_list.extend(articles)
 
         self._logger.info(f"Incoming Article Batches : {len(normalized_list)}")
 
         for article in normalized_list:
-            # noinspection PyUnresolvedReferences
             if article and article.uuid not in self._articles_present:
                 self.mem_buffer.append(article)
-                # noinspection PyUnresolvedReferences
                 self._articles_present.add(article.uuid)
 
         self._logger.info(f"Done prepping articles batch for sending to storage")
@@ -152,46 +150,40 @@ class DataConnector:
 
             for i in range(0, len(self.mem_buffer), batch_size):
                 batch_articles: list[RssArticle | NewsArticle] = self.mem_buffer[i:i + batch_size]
-                news_instance_tasks = [self.create_news_instance(article) for article in batch_articles]
-                news_sentiment_tasks = [self.create_news_sentiment(article) for article in batch_articles]
-                thumbnail_instance_tasks = [self.create_thumbnails_instance(article) for article in batch_articles]
-                related_tickers_instance_tasks = [self.create_related_tickers(article) for article in batch_articles]
+                news_instances = await asyncio.gather(*[self.create_news_instance(article)
+                                                        for article in batch_articles])
+                sentiment_instances = await asyncio.gather(*[self.create_news_sentiment(article)
+                                                             for article in batch_articles])
+                thumbnail_instances = await asyncio.gather(*[self.create_thumbnails_instance(article)
+                                                             for article in batch_articles])
+                related_tickers_instances = await asyncio.gather(*[self.create_related_tickers(article)
+                                                                   for article in batch_articles])
 
-                news_instances = await asyncio.gather(*news_instance_tasks)
-                sentiment_instances = await asyncio.gather(*news_sentiment_tasks)
-                thumbnail_instances = await asyncio.gather(*thumbnail_instance_tasks)
-                related_tickers_instances = await asyncio.gather(*related_tickers_instance_tasks)
-
-                error_occured = False
                 for instance in news_instances:
                     try:
                         session.add(instance)
                     except Exception:
-                        error_occured = True
                         self._logger.info(f"Exception Occurred When adding News Article")
 
-                if not error_occured:
-                    for news_sentiment in sentiment_instances:
+                for news_sentiment in sentiment_instances:
+                    try:
+                        session.add(news_sentiment)
+                    except Exception:
+                        self._logger.info(f"Exception Occurred When adding News Sentiment")
+
+                for thumbnail_list in thumbnail_instances:
+                    for thumbnail in thumbnail_list:
                         try:
-                            session.add(news_sentiment)
+                            session.add(thumbnail)
                         except Exception:
-                            self._logger.info(f"Exception Occurred When adding News Sentiment")
+                            self._logger.info(f"Exception Occurred when Adding Thumbnails")
 
-                    for thumbnail_list in thumbnail_instances:
-                        for thumbnail in thumbnail_list:
-                            try:
-                                session.add(thumbnail)
-                            except Exception:
-                                self._logger.info(f"Exception Occured when Adding Thumbnails")
-
-                    for tickers_list in related_tickers_instances:
-                        for ticker in tickers_list:
-                            try:
-                                session.add(ticker)
-                            except Exception:
-                                self._logger.info(f"Exception Occured when adding Tickers")
-                else:
-                    session.rollback()
+                for tickers_list in related_tickers_instances:
+                    for ticker in tickers_list:
+                        try:
+                            session.add(ticker)
+                        except Exception:
+                            self._logger.info(f"Exception Occurred when adding Tickers")
 
                 self._logger.info(f"Batch Count : {i}")
             try:
@@ -201,7 +193,7 @@ class DataConnector:
 
             self._logger.info(f"Overall Articles Saved : {total_saved}")
 
-    async def create_news_instance(self, article: RssArticle | NewsArticle) -> News:
+    async def create_news_instance(self, article: RssArticle | NewsArticle) -> News | None:
         """
         **create_news_instance**
 
@@ -209,14 +201,14 @@ class DataConnector:
         :return:
         """
         try:
-            return News(uuid=article.uuid, title=article.title, publisher=article.publisher,
+            return News(uuid=str(article.uuid), title=article.title, publisher=article.publisher,
                         link=article.link, providerPublishTime=article.providerPublishTime,
                         _type=article.type)
         except Exception:
             self._logger.info(f"Unable to create instance News Article")
             return None
 
-    async def create_news_sentiment(self, article: RssArticle | NewsArticle) -> NewsSentiment:
+    async def create_news_sentiment(self, article: RssArticle | NewsArticle) -> NewsSentiment | None:
         """
 
         :param article:
@@ -230,7 +222,7 @@ class DataConnector:
             self._logger.info(f"Unable to create instance Sentiment Model")
             return None
 
-    async def create_thumbnails_instance(self, article: RssArticle | NewsArticle) -> Thumbnails:
+    async def create_thumbnails_instance(self, article: RssArticle | NewsArticle) -> list[Thumbnails] | None:
         """
         **create_thumbnails_instance**
 
@@ -239,20 +231,20 @@ class DataConnector:
         :return:
         """
         try:
-            return [Thumbnails(thumbnail_id=create_id(), uuid=article.uuid, url=thumb.get('url'),
+            return [Thumbnails(thumbnail_id=create_id(), uuid=str(article.uuid), url=thumb.get('url'),
                                width=thumb.get('width'), height=thumb.get('height'), tag=thumb.get('tag')) for thumb in
                     article.thumbnail]
         except Exception:
             self._logger.info(f"Unable to create instance Thumbnail Model")
             return None
 
-    async def create_related_tickers(self, article: RssArticle | NewsArticle) -> RelatedTickers:
+    async def create_related_tickers(self, article: RssArticle | NewsArticle) -> list[RelatedTickers] | None:
         """
         :param article:
         :return:
         """
         try:
-            return [RelatedTickers(uuid=article.uuid, ticker=ticker) for ticker in article.relatedTickers]
+            return [RelatedTickers(uuid=str(article.uuid), ticker=ticker) for ticker in article.relatedTickers]
         except Exception:
             self._logger.info(f"Unable to create Related Tickers Model")
             return None

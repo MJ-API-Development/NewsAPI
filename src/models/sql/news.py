@@ -320,7 +320,7 @@ class News(Base, _News):
     @classmethod
     async def get_by_uuid_list(cls, uuid_list: list[str], session: sessionType):
         """Returns all articles matching the supplied uuid list, including sentiment relationship"""
-        return (session.query(cls).options(joinedload(cls.sentiment)).options(joinedload(cls.tickers)).options(
+        return session.query(cls).options(joinedload(cls.sentiment)).options(joinedload(cls.tickers)).options(
             joinedload(cls.thumbnails)).filter(cls.uuid.in_(uuid_list)).all() if isinstance(uuid_list, list) else []
 
     @classmethod

@@ -57,7 +57,7 @@ async def scheduled_task() -> None:
         for schedule_time, task_details in list(scheduler_settings.schedule_times.items()):
 
             # Select and Run task
-            articles: list[dict[str, NewsArticle | RssArticle]] = await scrape_news_yahoo(tickers_list)
+            articles: list[dict[str, list[NewsArticle | RssArticle]]] = await scrape_news_yahoo(tickers_list)
             print(f'RETURNING: {len(articles)} Articles to storage')
             # prepare articles and store them into a buffer for sending to backend
             await data_sink.incoming_articles(article_list=articles)
