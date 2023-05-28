@@ -129,6 +129,9 @@ async def alternate_news_sources(*args, **kwargs) -> list[NewsArticle | RssArtic
     return articles_list
 
 
+import requests
+
+
 async def parse_article(article: RssArticle | NewsArticle | None) -> tuple[str | None, str | None, str | None]:
     """**parse_article**
     will parse articles from yfinance
@@ -146,11 +149,22 @@ async def parse_article(article: RssArticle | NewsArticle | None) -> tuple[str |
         title: str = soup.find('h1').get_text() or soup.find('h2').get_text()
         summary: str = soup.find('p').get_text()
         body: str | None = None
-        try:
+
+        # Check if there is a "Read More" button
+        read_more_button = soup.find('div', class_='caas-readmore')
+        if read_more_button:
+            read_more_url = read_more_button.find('a')['href']
+            full_article_html = requests.get(read_more_url).text
+            full_article_soup = BeautifulSoup(full_article_html, 'html.parser')
+
+            # Append the paragraphs from the full article
+            for elem in full_article_soup.find_all('p'):
+                body += elem.get_text()
+        else:
+            # Append the paragraphs from the original article
             for elem in soup.find_all('p'):
                 body += elem.get_text()
-        except Exception as e:
-            pass
+
         return title, summary, body
     except Exception:
         raise ErrorParsingHTMLDocument()
