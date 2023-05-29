@@ -4,6 +4,7 @@ import json
 
 from bs4 import BeautifulSoup
 
+from src.parsers.motley_fool import parse_motley_article
 from src.connector.data_connector import data_sink
 from src.exceptions import ErrorParsingHTMLDocument
 from src.models import RssArticle, NewsArticle
@@ -139,7 +140,9 @@ async def parse_article(article: RssArticle | NewsArticle | None) -> tuple[str |
     _headers = await switch_headers()
 
     _html = await cloud_flare_proxy.make_request_with_cloudflare(url=article.link, method="GET")
+
     html = _html if _html is not None else await download_article(link=article.link, timeout=9600, headers=_headers)
+
     if html is None:
         return None, None, None
     try:
@@ -147,21 +150,31 @@ async def parse_article(article: RssArticle | NewsArticle | None) -> tuple[str |
         title: str = soup.find('h1').get_text() or soup.find('h2').get_text()
         summary: str = soup.find('p').get_text()
         body: str | None = None
-
+        print(summary)
         # Check if there is a "Read More" button
-        read_more_button = soup.find('div', class_='caas-readmore')
-        if read_more_button:
+        read_more_button = soup.find('div', attrs={'class': 'caas-readmore'})
+        if read_more_button is not None:
+            print(f"read more button found : ")
             read_more_url = read_more_button.find('a')['href']
+            print(read_more_url)
             full_article_html = await download_article(link=read_more_url, timeout=9600, headers=_headers)
-            full_article_soup = BeautifulSoup(full_article_html, 'html.parser')
-
-            # Append the paragraphs from the full article
-            for elem in full_article_soup.find_all('p'):
-                body += elem.get_text()
+            # TODO include more parsers are time goes on
+            if 'https://www.fool.com/' in read_more_url.casefold():
+                parsed_data = parse_motley_article(html=full_article_html)
+            else:
+                parsed_data = {}
+            if parsed_data:
+                body = parsed_data.get('content')
         else:
             # Append the paragraphs from the original article
             for elem in soup.find_all('p'):
                 body += elem.get_text()
+        if body is None:
+            try:
+                for elem in soup.find_all('p'):
+                    body += elem.get_text()
+            except Exception:
+                pass
 
         return title, summary, body
     except Exception:
