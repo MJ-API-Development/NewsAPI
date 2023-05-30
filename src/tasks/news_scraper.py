@@ -96,8 +96,6 @@ def get_thumbnail_resolutions(article: dict[str, dict[str, str | int] | list]) -
     thumbnail: dict[str, str | int] = article.get('thumbnail')
     if thumbnail is None:
         return []
-    if not isinstance(thumbnail, dict):
-        return []
     return thumbnail.get('resolutions', [])
 
 
