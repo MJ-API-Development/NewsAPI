@@ -96,7 +96,7 @@ class TelemetryStream:
         else:
             telemetry = Telemetry()
             await telemetry.add_error_metric(error_metric=error_metric)
-            self.telemetry_data.update({f'{current_minute}': telemetry})
+            self.telemetry_data.update({current_minute: telemetry})
 
     async def capture_time_metrics(self, name, current_minute, start_time):
         time_metrics: TimeMetrics = TimeMetrics(method_name=name, latency=(time.monotonic() - start_time))
@@ -135,8 +135,8 @@ class TelemetryStream:
 
         method_max_latency = dict()
         for method in list(self.method_names):
-            method_max_latency.update({f'{method}': max([lambda metric: get_latency(metric)
-                                                         for metric in self.telemetry_data.values()])})
+            method_max_latency.update({f'{method}': max(*[lambda metric: get_latency(metric)
+                                                          for metric in self.telemetry_data.values()])})
         return method_max_latency
 
     # noinspection PyUnusedLocal
@@ -156,7 +156,7 @@ class TelemetryStream:
         for method in list(self.method_names):
             method_max_latency.update({
                 f'{method}': min(
-                    [lambda metric: get_latency(metric=metric) for metric in self.telemetry_data.values()])})
+                    *[lambda metric: get_latency(metric=metric) for metric in self.telemetry_data.values()])})
         return method_max_latency
 
     def dict(self) -> dict[str, str | float | dict[str, float]]:

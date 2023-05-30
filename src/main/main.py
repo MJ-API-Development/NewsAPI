@@ -15,7 +15,7 @@ from src.utils.my_logger import init_logger
 
 main_logger = init_logger('Main Logger')
 # Extended Sleep Hours to 2 to prevent over using proxy server request allocations
-SLEEP_HOURS = 60*60 * 2
+SLEEP_HOURS = 60 * 60 * 2
 ONE_MINUTE = 60
 settings = config_instance().APP_SETTINGS
 app = FastAPI(
@@ -38,7 +38,7 @@ app = FastAPI(
 )
 scraperType: TypeAlias = Coroutine[list[str], None, list[dict[str, NewsArticle | RssArticle]]]
 
-tasks_lookup= {
+tasks_lookup = {
     'scrape_news_yahoo': scrape_news_yahoo,
     'alternate_news_sources': alternate_news_sources,
 }
@@ -79,7 +79,7 @@ async def scheduled_task() -> None:
             task_details.task_ran = True
             scheduler_settings.schedule_times[schedule_time] = task_details
             # Sleep for 1 hour minutes
-            main_logger.info(f'Sleeping for : {SLEEP_HOURS/(60*60)} Hours')
+            main_logger.info(f'Sleeping for : {SLEEP_HOURS / (60 * 60)} Hours')
             await asyncio.sleep(SLEEP_HOURS)
             # sleep one minute then run again
             # await asyncio.sleep(ONE_MINUTE)
