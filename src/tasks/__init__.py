@@ -181,17 +181,17 @@ async def get_meme_tickers(count: int = 300, offset: int = 0) -> dict[str, str]:
     _present_tickers, tickers = await sub_query_tickers(count=count, offset=offset)
 
     for _ticker, name in list(get_meme_tickers_us().items()):
-        if _ticker not in _present_tickers:
+        if _ticker.casefold() not in _present_tickers:
             tickers[_ticker] = name
             _present_tickers.add(_ticker)
 
     for _ticker, name in list(get_meme_tickers_canada().items()):
-        if _ticker not in _present_tickers:
+        if _ticker.casefold() not in _present_tickers:
             tickers[_ticker] = name
             _present_tickers.add(_ticker)
 
     for _ticker, name in list(get_meme_tickers_brazil().items()):
-        if _ticker not in _present_tickers:
+        if _ticker.casefold() not in _present_tickers:
             tickers[_ticker] = name
             _present_tickers.add(_ticker)
 
@@ -200,6 +200,13 @@ async def get_meme_tickers(count: int = 300, offset: int = 0) -> dict[str, str]:
 
 
 async def sub_query_tickers(count: int = 300, offset: int = 0) -> tuple[set[str], dict[str, str]]:
+    """
+        **sub_query_tickers**
+            make request to obtain trending tickers and then parse for ticker data
+    :param count:
+    :param offset:
+    :return:
+    """
     url = f"{config_instance().MEME_TICKERS_URI}?count={count}&offset={offset}"
     headers = await switch_headers()
     try:
