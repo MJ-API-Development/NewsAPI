@@ -86,14 +86,14 @@ async def ticker_articles(ticker: str) -> list[NewsArticle | RssArticle]:
     return articles
 
 
-def get_thumbnail_resolutions(article: dict[str, str, dict[str, str | int] | list]) -> list[dict[str, str | int]]:
+def get_thumbnail_resolutions(article: dict[str, dict[str, str | int] | list]) -> list[dict[str, str | int]]:
     """Gets the thumbnail resolutions for an article.
   Args:
     article: The article to get the thumbnail resolutions for.
   Returns:
     A list of thumbnail resolutions.
   """
-    thumbnail = article.get('thumbnail')
+    thumbnail: dict[str, str | int] = article.get('thumbnail')
     if thumbnail is None:
         return []
     if not isinstance(thumbnail, dict):
