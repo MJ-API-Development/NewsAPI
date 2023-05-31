@@ -213,7 +213,7 @@ class DataConnector:
         :return:
         """
         try:
-            return News(uuid=str(article.uuid), title=article.title, publisher=article.publisher,
+            return News(uuid=article.uuid, title=article.title, publisher=article.publisher,
                         link=article.link, providerPublishTime=article.providerPublishTime,
                         _type=article.type)
         except Exception:
