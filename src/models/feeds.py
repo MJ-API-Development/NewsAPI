@@ -11,7 +11,7 @@ class RssArticle(BaseModel):
             Feeds must be taken from Google.
 
     """
-    uuid: _uuid.UUID = Field(default_factory=lambda: _uuid.uuid4())
+    uuid: str = Field(default_factory=lambda: _uuid.uuid4())
     title: str
     publisher: str | None
     link: str

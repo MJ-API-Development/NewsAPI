@@ -71,10 +71,12 @@ async def get_exchange_lists() -> list[Exchange]:
 
     if response.headers.get('Content-Type') == 'application/json':
         response_data: dict[str, str | bool | dict[str, str] | list[dict[str, str]]] = response.json()
+
         if response_data.get('status', False):
             exchange_list: list[dict[str, str]] = response_data.get('payload')
 
             return [Exchange(**exchange) for exchange in exchange_list]
+
     return []
 
 

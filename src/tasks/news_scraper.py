@@ -151,7 +151,7 @@ async def parse_article(article: RssArticle | NewsArticle | None) -> tuple[str |
         title: str = soup.find('h1').get_text() or soup.find('h2').get_text()
         summary: str = soup.find('p').get_text()
         body: str | None = None
-        print(summary)
+
         # Check if there is a "Read More" button
         read_more_button = soup.find('div', attrs={'class': 'caas-readmore'})
         if read_more_button is not None:

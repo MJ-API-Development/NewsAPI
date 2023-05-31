@@ -243,7 +243,7 @@ class DataConnector:
         :return:
         """
         try:
-            thumb_nails = [Thumbnails(thumbnail_id=create_id(), uuid=str(article.uuid), url=thumb.url,
+            thumb_nails = [Thumbnails(thumbnail_id=create_id(), uuid=article.uuid, url=thumb.url,
                                       width=thumb.width, height=thumb.height, tag=thumb.tag)
                            for thumb in article.thumbnail]
 
@@ -259,7 +259,7 @@ class DataConnector:
         :return:
         """
         try:
-            return [RelatedTickers(uuid=str(article.uuid), ticker=ticker) for ticker in article.relatedTickers]
+            return [RelatedTickers(uuid=article.uuid, ticker=ticker) for ticker in article.relatedTickers]
         except Exception:
             self._logger.info(f"Unable to create Related Tickers Model")
             return None
