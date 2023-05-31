@@ -62,9 +62,12 @@ async def ticker_articles(ticker: str) -> list[NewsArticle | RssArticle]:
         # article['thumbnail'] = get_thumbnail_resolutions(article=article)
         article.update({'thumbnail': get_thumbnail_resolutions(article=article)})
         # noinspection PyBroadException
+        # news_scrapper_logger.info(f"Thumbnails : {article['thumbnail']}")
         try:
             # NOTE: sometimes there is a strange list error here, don't know why honestly
             _article: NewsArticle | None = NewsArticle(**article)
+            # news_scrapper_logger.info(f"Thumbnails : {_article.thumbnail}")
+
         except Exception as e:
             news_scrapper_logger.info(f'Error Creating NewsArticle: {str(e)}')
             _article = None
@@ -152,15 +155,16 @@ async def parse_article(article: RssArticle | NewsArticle | None) -> tuple[str |
         # Check if there is a "Read More" button
         read_more_button = soup.find('div', attrs={'class': 'caas-readmore'})
         if read_more_button is not None:
-            print(f"read more button found : ")
+
             read_more_url = read_more_button.find('a')['href']
-            print(read_more_url)
+
             full_article_html = await download_article(link=read_more_url, timeout=9600, headers=_headers)
-            # TODO include more parsers are time goes on
+
             if 'https://www.fool.com/' in read_more_url.casefold():
                 parsed_data = parse_motley_article(html=full_article_html)
             else:
                 parsed_data = {}
+
             if parsed_data:
                 body = parsed_data.get('content')
         else:

@@ -4,7 +4,7 @@ from dateutil.parser import parse, ParserError
 from sqlalchemy import Column, String, Integer, inspect, ForeignKey, func
 from sqlalchemy.dialects.mysql import LONGTEXT
 from sqlalchemy.exc import DataError, OperationalError, IntegrityError, PendingRollbackError
-from sqlalchemy.future import select
+from sqlalchemy import select
 from sqlalchemy.orm import relationship, joinedload
 from sqlalchemy.orm.exc import DetachedInstanceError
 
@@ -173,11 +173,14 @@ class Thumbnails(Base, _News):
             'height': self.height,
             'tag': self.tag}
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         :return:
         """
-        return f"<Thumbnail url: {self.url}>"
+        return f"<Thumbnail url: {self.url}, width: {self.width}, height: {self.height}>"
+
+    def __repr__(self) -> str:
+        return f"<Thumbnail url: {self.url}, width: {self.width}, height: {self.height}>"
 
     def __bool__(self) -> bool:
         return not not self.uuid
@@ -216,6 +219,9 @@ class RelatedTickers(Base, _News):
         """
         return f"<RelatedTickers ticker: {self.ticker}>"
 
+    def __repr__(self) -> str:
+        return f"<RelatedTickers ticker: {self.ticker}>"
+
     def __bool__(self) -> bool:
         return not not self.uuid
 
@@ -243,10 +249,11 @@ class News(Base, _News):
     providerPublishTime: int = Column(Integer)
     created_at: int = Column(Integer)
     type: str = Column(String(32), index=True)
-    sentiment = relationship('NewsSentiment', uselist=False, foreign_keys=[NewsSentiment.article_uuid], backref='news')
-    tickers = relationship('RelatedTickers', uselist=True, foreign_keys=[RelatedTickers.uuid], backref='news')
-    thumbnails = relationship('Thumbnails', uselist=True, foreign_keys=[Thumbnails.uuid], backref='news')
+    sentiment: NewsSentiment = relationship('NewsSentiment', uselist=False, foreign_keys=[NewsSentiment.article_uuid], backref='news')
+    tickers: list[RelatedTickers] = relationship('RelatedTickers', uselist=True, foreign_keys=[RelatedTickers.uuid], backref='news')
+    thumbnails: list[Thumbnails] = relationship('Thumbnails', uselist=True, foreign_keys=[Thumbnails.uuid], backref='news')
 
+    # noinspection PyPep8Naming
     def __init__(self, uuid: str, title: str, publisher: str, link: str, providerPublishTime: int, _type: str):
         """
             **__init__**
@@ -261,7 +268,7 @@ class News(Base, _News):
         self.uuid = uuid
         self.title = title
         self.publisher = publisher
-        self.created_at = datetime.now().timestamp()
+        self.created_at = int(datetime.now().timestamp())
         self.link = link
         self.providerPublishTime = providerPublishTime
         self.type = _type
@@ -314,6 +321,10 @@ class News(Base, _News):
         """
         :return:
         """
+        return f"<News title: {self.title}, publisher: {self.publisher}, link: {self.link}, " \
+               f"time: {self.providerPublishTime}, type: {self.type}"
+
+    def __repr__(self) -> str:
         return f"<News title: {self.title}, publisher: {self.publisher}, link: {self.link}, " \
                f"time: {self.providerPublishTime}, type: {self.type}"
 

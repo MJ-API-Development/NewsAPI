@@ -243,10 +243,12 @@ class DataConnector:
         :return:
         """
         try:
-            return [Thumbnails(thumbnail_id=create_id(), uuid=str(article.uuid), url=thumb.url,
-                               width=thumb.width, height=thumb.height, tag=thumb.tag)
-                    for thumb in article.thumbnail]
+            thumb_nails = [Thumbnails(thumbnail_id=create_id(), uuid=str(article.uuid), url=thumb.url,
+                                      width=thumb.width, height=thumb.height, tag=thumb.tag)
+                           for thumb in article.thumbnail]
 
+            self._logger.info(f"Thumbnails : {thumb_nails}")
+            return thumb_nails
         except Exception as e:
             self._logger.info(f"Unable to create instance Thumbnail Model : {str(e)}")
             return None
