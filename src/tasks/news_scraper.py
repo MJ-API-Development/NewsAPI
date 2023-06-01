@@ -3,6 +3,7 @@ import itertools
 import json
 
 from bs4 import BeautifulSoup
+from pydantic import ValidationError
 
 from src.parsers.motley_fool import parse_motley_article
 from src.connector.data_connector import data_sink
@@ -65,14 +66,16 @@ async def ticker_articles(ticker: str) -> list[NewsArticle | RssArticle]:
         # news_scrapper_logger.info(f"Thumbnails : {article['thumbnail']}")
         try:
             # NOTE: sometimes there is a strange list error here, don't know why honestly
-            _article: NewsArticle | None = NewsArticle(**article)
-            # news_scrapper_logger.info(f"Thumbnails : {_article.thumbnail}")
 
-        except Exception as e:
+            _article: NewsArticle | None = NewsArticle(**article)
+            news_scrapper_logger.info(f"Original Article Scrapped : {_article}")
+            # news_scrapper_logger.info(f"Thumbnails : {_article.thumbnail}")
+        except ValidationError as e:
             news_scrapper_logger.info(f'Error Creating NewsArticle: {str(e)}')
             _article = None
 
-        if _article and await data_sink.article_not_saved(article=article):
+        article_not_saved = await data_sink.article_not_saved(article=article)
+        if _article and article_not_saved:
             try:
                 title, summary, body = await parse_article(article=_article)
                 # Note: funny way of catching parser errors but hey - beggars cant be choosers
@@ -82,7 +85,8 @@ async def ticker_articles(ticker: str) -> list[NewsArticle | RssArticle]:
                     _article.body = body
 
                 articles.append(_article)
-
+                news_scrapper_logger.info(f"Added Article: {_article.thumbnail}")
+                news_scrapper_logger.info(f"Added Article: {_article.thumbnail}")
             except Exception as e:
                 news_scrapper_logger.info(f'error parsing article: {str(e)}')
 
@@ -179,8 +183,10 @@ async def parse_article(article: RssArticle | NewsArticle | None) -> tuple[str |
                 pass
 
         return title, summary, body
-    except Exception:
-        raise ErrorParsingHTMLDocument()
+    except Exception as e:
+        news_scrapper_logger.error(f'Error parsing Article : {str(e)}')
+        return None, None, None
+
 
 
 # noinspection PyUnusedLocal

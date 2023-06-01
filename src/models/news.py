@@ -1,4 +1,3 @@
-import uuid as _uuid
 from datetime import datetime
 from pydantic import BaseModel, Field
 
@@ -16,7 +15,7 @@ class NewsArticle(BaseModel):
     **NewsArticle**
         Used to parse YFinance Articles
     """
-    uuid: _uuid.UUID = Field(default_factory=lambda: _uuid.uuid4())
+    uuid: str
     title: str
     publisher: str | None
     link: str

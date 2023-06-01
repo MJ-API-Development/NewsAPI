@@ -154,18 +154,21 @@ class DataConnector:
                 for instance in news_instances:
                     try:
                         session.add(instance)
-                    except IntegrityError:
+                    except (IntegrityError, pymysql.err.IntegrityError):
                         session.rollback()
                         self._logger.info(f"Exception Occurred Data Integrity Error")
                     except Exception as e:
+                        session.rollback()
                         self._logger.info(f"Exception Occurred When adding News Article : {str(e)}")
+
+                    session.flush()
 
                 for news_sentiment in sentiment_instances:
                     try:
-                        session.add(news_sentiment)
+                        if news_sentiment is not None:
+                            session.add(news_sentiment)
 
                     except IntegrityError:
-                        session.rollback()
                         self._logger.info(f"Exception Occurred Data Integrity Error")
                     except Exception as e:
                         self._logger.info(f"Exception Occurred When adding News Sentiment : {str(e)}")
@@ -174,10 +177,10 @@ class DataConnector:
                     if thumbnail_list:
                         for thumbnail in thumbnail_list:
                             try:
-                                session.add(thumbnail)
+                                if thumbnail is not None:
+                                    session.add(thumbnail)
 
                             except IntegrityError:
-                                session.rollback()
                                 self._logger.info(f"Exception Occurred Data Integrity Error")
 
                             except Exception:
@@ -187,10 +190,10 @@ class DataConnector:
                     if tickers_list:
                         for ticker in tickers_list:
                             try:
-                                session.add(ticker)
+                                if ticker is not None:
+                                    session.add(ticker)
 
                             except IntegrityError:
-                                session.rollback()
                                 self._logger.info(f"Exception Occurred Data Integrity Error")
 
                             except Exception:
@@ -227,11 +230,13 @@ class DataConnector:
         :return:
         """
         try:
-            return NewsSentiment(article_uuid=article.uuid, stock_codes=",".join(article.relatedTickers),
-                                 title=article.title, link=article.link, article=article.body,
-                                 article_tldr=article.summary)
-        except Exception:
-            self._logger.info(f"Unable to create instance Sentiment Model")
+            if article.summary or article.body:
+                return NewsSentiment(article_uuid=article.uuid, stock_codes=",".join(article.relatedTickers),
+                                     title=article.title, link=article.link, article=article.body,
+                                     article_tldr=article.summary)
+            return None
+        except Exception as e:
+            self._logger.info(f"Unable to create instance Sentiment Model : {str(e)}")
             return None
 
     async def create_thumbnails_instance(self, article: RssArticle | NewsArticle) -> list[Thumbnails] | None:
@@ -243,12 +248,14 @@ class DataConnector:
         :return:
         """
         try:
-            thumb_nails = [Thumbnails(thumbnail_id=create_id(), uuid=article.uuid, url=thumb.url,
-                                      width=thumb.width, height=thumb.height, tag=thumb.tag)
-                           for thumb in article.thumbnail]
+            if article.thumbnail:
+                thumb_nails = [Thumbnails(thumbnail_id=create_id(), uuid=article.uuid, url=thumb.url,
+                                          width=thumb.width, height=thumb.height, tag=thumb.tag)
+                               for thumb in article.thumbnail]
 
-            self._logger.info(f"Thumbnails : {thumb_nails}")
-            return thumb_nails
+                self._logger.info(f"Thumbnails : {thumb_nails}")
+                return thumb_nails
+            return None
         except Exception as e:
             self._logger.info(f"Unable to create instance Thumbnail Model : {str(e)}")
             return None
@@ -259,9 +266,11 @@ class DataConnector:
         :return:
         """
         try:
-            return [RelatedTickers(uuid=article.uuid, ticker=ticker) for ticker in article.relatedTickers]
-        except Exception:
-            self._logger.info(f"Unable to create Related Tickers Model")
+            if article.relatedTickers:
+                return [RelatedTickers(uuid=article.uuid, ticker=ticker) for ticker in article.relatedTickers]
+            return None
+        except Exception as e:
+            self._logger.info(f"Unable to create Related Tickers Model : {str(e)}")
             return None
 
 
