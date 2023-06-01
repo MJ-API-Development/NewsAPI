@@ -15,10 +15,10 @@ from src.telemetry import capture_telemetry
 from src.utils import camel_to_snake, create_id
 from src.utils.my_logger import init_logger
 
-sendArticleType: TypeAlias = Coroutine[RssArticle | NewsArticle, None, RssArticle | NewsArticle | None]
+sendArticleType: TypeAlias = Coroutine[NewsArticle, None, NewsArticle | None]
 
 
-async def save_to_local_drive(article: NewsArticle | RssArticle):
+async def save_to_local_drive(article: NewsArticle):
     """
         **save_to_local_drive**
             will save articles that failed to be sent to the API to local hard drive as temporary storage
@@ -58,7 +58,7 @@ class DataConnector:
     async def article_not_saved(self, article: dict) -> bool:
         return isinstance(article, dict) and (article.get('uuid', "1234") not in self._articles_present)
 
-    async def incoming_articles(self, article_list: list[NewsArticle | RssArticle]):
+    async def incoming_articles(self, article_list: list[NewsArticle]):
         """
         **incoming_articles**
             :param article_list:
@@ -68,9 +68,9 @@ class DataConnector:
             return
 
         for article in article_list:
-            if article and str(article.uuid) not in self._articles_present:
+            if article and article.uuid not in self._articles_present:
                 self.mem_buffer.append(article)
-                self._articles_present.add(str(article.uuid))
+                self._articles_present.add(article.uuid)
 
         self._logger.info(f"Done prepping articles batch for sending to storage")
         self._logger.info(f"Total Articles Prepped : {len(self.mem_buffer)}")
@@ -96,7 +96,7 @@ class DataConnector:
             # await asyncio.sleep(delay=self._to_storage_delay)
 
     @capture_telemetry(name='send-article-to-storage')
-    async def send_article_to_storage(self, article: RssArticle | NewsArticle) -> RssArticle | NewsArticle | None:
+    async def send_article_to_storage(self, article: NewsArticle) ->  NewsArticle | None:
         """
             **send_article_to_storage**
                 send articles via http to cron jobs server
@@ -140,7 +140,7 @@ class DataConnector:
             total_saved = 0
 
             for i in range(0, len(self.mem_buffer), batch_size):
-                batch_articles: list[RssArticle | NewsArticle] = self.mem_buffer[i:i + batch_size]
+                batch_articles: list[NewsArticle] = self.mem_buffer[i:i + batch_size]
                 news_instances = await asyncio.gather(*[self.create_news_instance(article)
                                                         for article in batch_articles])
                 sentiment_instances = await asyncio.gather(*[self.create_news_sentiment(article)
@@ -153,7 +153,8 @@ class DataConnector:
 
                 for instance in news_instances:
                     try:
-                        session.add(instance)
+                        if news_instances is not None:
+                            session.add(instance)
                     except (IntegrityError, pymysql.err.IntegrityError):
                         session.rollback()
                         self._logger.info(f"Exception Occurred Data Integrity Error")
@@ -208,7 +209,7 @@ class DataConnector:
 
             self._logger.info(f"Overall Articles Saved : {total_saved}")
 
-    async def create_news_instance(self, article: RssArticle | NewsArticle) -> News | None:
+    async def create_news_instance(self, article: NewsArticle) -> News | None:
         """
         **create_news_instance**
 
@@ -216,14 +217,16 @@ class DataConnector:
         :return:
         """
         try:
-            return News(uuid=article.uuid, title=article.title, publisher=article.publisher,
-                        link=article.link, providerPublishTime=article.providerPublishTime,
-                        _type=article.type)
+            if article:
+                return News(uuid=article.uuid, title=article.title, publisher=article.publisher,
+                            link=article.link, providerPublishTime=article.providerPublishTime,
+                            _type=article.type)
+            return None
         except Exception:
             self._logger.info(f"Unable to create instance News Article")
             return None
 
-    async def create_news_sentiment(self, article: RssArticle | NewsArticle) -> NewsSentiment | None:
+    async def create_news_sentiment(self, article: NewsArticle) -> NewsSentiment | None:
         """
 
         :param article:
@@ -239,7 +242,7 @@ class DataConnector:
             self._logger.info(f"Unable to create instance Sentiment Model : {str(e)}")
             return None
 
-    async def create_thumbnails_instance(self, article: RssArticle | NewsArticle) -> list[Thumbnails] | None:
+    async def create_thumbnails_instance(self, article: NewsArticle) -> list[Thumbnails] | None:
         """
         **create_thumbnails_instance**
 
@@ -260,7 +263,7 @@ class DataConnector:
             self._logger.info(f"Unable to create instance Thumbnail Model : {str(e)}")
             return None
 
-    async def create_related_tickers(self, article: RssArticle | NewsArticle) -> list[RelatedTickers] | None:
+    async def create_related_tickers(self, article: NewsArticle) -> list[RelatedTickers] | None:
         """
         :param article:
         :return:

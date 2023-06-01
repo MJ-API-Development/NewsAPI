@@ -27,7 +27,7 @@ async def scrape_news_yahoo(tickers: list[str], _chunk_size: int = 10) -> list[N
             chunk = tickers[i:i + chunk_size]
             tasks = [ticker_articles(ticker=ticker) for ticker in chunk]
             results = await asyncio.gather(*tasks)
-            articles_tickers.extend([articles for articles in results if articles is not None])
+            articles_tickers.extend([articles for articles in results if isinstance(articles, list)])
 
         return list(itertools.chain(*articles_tickers))
     except Exception as e:
@@ -85,8 +85,7 @@ async def ticker_articles(ticker: str) -> list[NewsArticle | RssArticle]:
                     _article.body = body
 
                 articles.append(_article)
-                news_scrapper_logger.info(f"Added Article: {_article.thumbnail}")
-                news_scrapper_logger.info(f"Added Article: {_article.thumbnail}")
+                news_scrapper_logger.info(f"Added Article: {_article}")
             except Exception as e:
                 news_scrapper_logger.info(f'error parsing article: {str(e)}')
 
@@ -173,26 +172,26 @@ async def parse_article(article: RssArticle | NewsArticle | None) -> tuple[str |
                     body = parsed_data.get('content')
 
             except Exception:
-                for elem in soup.find_all('p'):
-                    body += elem.get_text()
-        else:
-            # Append the paragraphs from the original article
-            for elem in soup.find_all('p'):
-                body += elem.get_text()
-
-        if body is None:
-            try:
-                for elem in soup.find_all('p'):
-                    if elem:
-                        body += elem.get_text()
-            except Exception:
                 pass
 
+        else:
+            pass
+
+        if not body:
+            try:
+                for elem in soup.find_all('p'):
+                    text = elem.get_text()
+                    if text:
+                        body += text
+
+            except Exception:
+                return title, summary, None
+
         return title, summary, body
+
     except Exception as e:
         news_scrapper_logger.error(f'Error parsing Article : {str(e)}')
         return None, None, None
-
 
 
 # noinspection PyUnusedLocal
