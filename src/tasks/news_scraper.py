@@ -154,7 +154,7 @@ async def parse_article(article: RssArticle | NewsArticle | None) -> tuple[str |
         soup = BeautifulSoup(html, 'html.parser')
         title: str = soup.find('h1').get_text() or soup.find('h2').get_text()
         summary: str = soup.find('p').get_text()
-        body: str | None = None
+        body: str | None = ""
 
         # Check if there is a "Read More" button
         read_more_button = soup.find('div', attrs={'class': 'caas-readmore'})
@@ -183,7 +183,8 @@ async def parse_article(article: RssArticle | NewsArticle | None) -> tuple[str |
         if body is None:
             try:
                 for elem in soup.find_all('p'):
-                    body += elem.get_text()
+                    if elem:
+                        body += elem.get_text()
             except Exception:
                 pass
 
