@@ -156,13 +156,11 @@ class DataConnector:
                         if news_instances is not None:
                             session.add(instance)
                     except (IntegrityError, pymysql.err.IntegrityError):
-                        session.rollback()
                         self._logger.info(f"Exception Occurred Data Integrity Error")
                     except Exception as e:
-                        session.rollback()
                         self._logger.info(f"Exception Occurred When adding News Article : {str(e)}")
 
-                    session.flush()
+                session.flush()
 
                 for news_sentiment in sentiment_instances:
                     try:
