@@ -35,6 +35,18 @@ class NewsSentiment(Base):
     sentiment_article: str = Column(String(255), default=None)  # sentiment analysis for the actual article
     link: str = Column(String(255))
 
+    def __init__(self, article_uuid, stock_codes, title, link, sentiment_title=None, article=None, article_tldr=None,
+                 sentiment_article=None):
+
+        self.article_uuid = article_uuid
+        self.stock_codes = stock_codes
+        self.title = title
+        self.sentiment_title = sentiment_title
+        self.article = article
+        self.article_tldr = article_tldr
+        self.sentiment_article = sentiment_article
+        self.link = link
+
     @classmethod
     def create_if_not_table(cls):
         if not inspect(mysql_instance.engine).has_table(cls.__tablename__):
@@ -249,9 +261,12 @@ class News(Base, _News):
     providerPublishTime: int = Column(Integer)
     created_at: int = Column(Integer)
     type: str = Column(String(32), index=True)
-    sentiment: NewsSentiment = relationship('NewsSentiment', uselist=False, foreign_keys=[NewsSentiment.article_uuid], backref='news')
-    tickers: list[RelatedTickers] = relationship('RelatedTickers', uselist=True, foreign_keys=[RelatedTickers.uuid], backref='news')
-    thumbnails: list[Thumbnails] = relationship('Thumbnails', uselist=True, foreign_keys=[Thumbnails.uuid], backref='news')
+    sentiment: NewsSentiment = relationship('NewsSentiment', uselist=False, foreign_keys=[NewsSentiment.article_uuid],
+                                            backref='news')
+    tickers: list[RelatedTickers] = relationship('RelatedTickers', uselist=True, foreign_keys=[RelatedTickers.uuid],
+                                                 backref='news')
+    thumbnails: list[Thumbnails] = relationship('Thumbnails', uselist=True, foreign_keys=[Thumbnails.uuid],
+                                                backref='news')
 
     # noinspection PyPep8Naming
     def __init__(self, uuid: str, title: str, publisher: str, link: str, providerPublishTime: int, _type: str):
