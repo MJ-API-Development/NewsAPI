@@ -159,22 +159,27 @@ async def parse_article(article: RssArticle | NewsArticle | None) -> tuple[str |
         # Check if there is a "Read More" button
         read_more_button = soup.find('div', attrs={'class': 'caas-readmore'})
         if read_more_button is not None:
+            try:
+                read_more_url = read_more_button.find('a')['href']
 
-            read_more_url = read_more_button.find('a')['href']
+                full_article_html = await download_article(link=read_more_url, timeout=9600, headers=_headers)
 
-            full_article_html = await download_article(link=read_more_url, timeout=9600, headers=_headers)
+                if 'https://www.fool.com/' in read_more_url.casefold():
+                    parsed_data = parse_motley_article(html=full_article_html)
+                else:
+                    parsed_data = {}
 
-            if 'https://www.fool.com/' in read_more_url.casefold():
-                parsed_data = parse_motley_article(html=full_article_html)
-            else:
-                parsed_data = {}
+                if parsed_data:
+                    body = parsed_data.get('content')
 
-            if parsed_data:
-                body = parsed_data.get('content')
+            except Exception:
+                for elem in soup.find_all('p'):
+                    body += elem.get_text()
         else:
             # Append the paragraphs from the original article
             for elem in soup.find_all('p'):
                 body += elem.get_text()
+
         if body is None:
             try:
                 for elem in soup.find_all('p'):
