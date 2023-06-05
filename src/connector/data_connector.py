@@ -171,7 +171,7 @@ class DataConnector:
                         self._logger.info(f"Exception Occurred Data Integrity Error")
                     except Exception as e:
                         self._logger.info(f"Exception Occurred When adding News Sentiment : {str(e)}")
-
+                self._logger.info(f"Thumbnail instances : {thumbnail_instances}")
                 for thumbnail_list in thumbnail_instances:
                     if thumbnail_list:
                         for thumbnail in thumbnail_list:

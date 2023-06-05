@@ -189,10 +189,10 @@ class Thumbnails(Base, _News):
         """
         :return:
         """
-        return f"<Thumbnail url: {self.url}, width: {self.width}, height: {self.height}>"
+        return f"<Thumbnail UUID: {self.uuid}, URL: {self.url}, width: {self.width}, height: {self.height}>"
 
     def __repr__(self) -> str:
-        return f"<Thumbnail url: {self.url}, width: {self.width}, height: {self.height}>"
+        return f"<Thumbnail UUID: {self.uuid},  URL: {self.url}, width: {self.width}, height: {self.height}>"
 
     def __bool__(self) -> bool:
         return not not self.uuid

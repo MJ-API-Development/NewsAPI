@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 
 class Thumbnail(BaseModel):
@@ -27,6 +27,20 @@ class NewsArticle(BaseModel):
     summary: str | None
     body: str | None
 
+    @validator('relatedTickers', pre=True)
+    def validate_tickers(cls, value) -> list[str]:
+        if isinstance(value, str):
+            return value.split(',')
+        return value
+
+    @validator('thumbnail', pre=True)
+    def validate_thumbnail(cls, value):
+        if isinstance(value, list):
+            for thumb in value:
+                Thumbnail(**thumb)
+            return [Thumbnail(**thumb) for thumb in value if not isinstance(thumb, Thumbnail)]
+        return value
+
     @property
     def publish_time(self) -> datetime:
         """
@@ -38,3 +52,4 @@ class NewsArticle(BaseModel):
 
     class Config:
         title = "YFinance Article Model"
+        anystr_strip_whitespace = True
