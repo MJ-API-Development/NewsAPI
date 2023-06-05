@@ -171,7 +171,8 @@ async def parse_article(article: RssArticle | NewsArticle | None) -> tuple[str |
                 if parsed_data:
                     body = parsed_data.get('content')
 
-            except Exception:
+            except Exception as e:
+                news_scrapper_logger.error(f'Error parsing Article : {str(e)}')
                 pass
 
         else:
@@ -184,7 +185,8 @@ async def parse_article(article: RssArticle | NewsArticle | None) -> tuple[str |
                     if text:
                         body += text
 
-            except Exception:
+            except Exception as e:
+                news_scrapper_logger.error(f'Error parsing Article : {str(e)}')
                 return title, summary, None
 
         return title, summary, body
