@@ -96,7 +96,7 @@ class DataConnector:
             # await asyncio.sleep(delay=self._to_storage_delay)
 
     @capture_telemetry(name='send-article-to-storage')
-    async def send_article_to_storage(self, article: NewsArticle) ->  NewsArticle | None:
+    async def send_article_to_storage(self, article: NewsArticle) -> NewsArticle | None:
         """
             **send_article_to_storage**
                 send articles via http to cron jobs server
@@ -134,78 +134,82 @@ class DataConnector:
             **send_to_database**
         :return:
         """
-        with mysql_instance.get_session() as session:
-            # process articles in groups of 20
-            batch_size: int = _batch_size if len(self.mem_buffer) > _batch_size else len(self.mem_buffer)
-            total_saved = 0
 
-            for i in range(0, len(self.mem_buffer), batch_size):
-                batch_articles: list[NewsArticle] = self.mem_buffer[i:i + batch_size]
-                news_instances = await asyncio.gather(*[self.create_news_instance(article)
-                                                        for article in batch_articles])
-                sentiment_instances = await asyncio.gather(*[self.create_news_sentiment(article)
-                                                             for article in batch_articles])
-                thumbnail_instances = await asyncio.gather(*[self.create_thumbnails_instance(article)
-                                                             for article in batch_articles])
-                related_tickers_instances = await asyncio.gather(*[self.create_related_tickers(article)
-                                                                   for article in batch_articles])
-                total_saved += batch_size
+        # process articles in groups of 20
+        batch_size: int = _batch_size if len(self.mem_buffer) > _batch_size else len(self.mem_buffer)
+        total_saved = 0
 
-                for instance in news_instances:
-                    try:
-                        if news_instances is not None:
-                            session.add(instance)
-                    except (IntegrityError, pymysql.err.IntegrityError):
-                        self._logger.info(f"Exception Occurred Data Integrity Error")
-                    except Exception as e:
-                        self._logger.info(f"Exception Occurred When adding News Article : {str(e)}")
+        for i in range(0, len(self.mem_buffer), batch_size):
+            batch_articles: list[NewsArticle] = self.mem_buffer[i:i + batch_size]
+            news_instances = await asyncio.gather(*[self.create_news_instance(article)
+                                                    for article in batch_articles])
+            sentiment_instances = await asyncio.gather(*[self.create_news_sentiment(article)
+                                                         for article in batch_articles])
+            thumbnail_instances = await asyncio.gather(*[self.create_thumbnails_instance(article)
+                                                         for article in batch_articles])
+            related_tickers_instances = await asyncio.gather(*[self.create_related_tickers(article)
+                                                               for article in batch_articles])
+            total_saved += batch_size
 
-                session.flush()
+            await self.save_news_instances(news_instances)
 
-                for news_sentiment in sentiment_instances:
-                    try:
-                        if news_sentiment is not None:
-                            session.add(news_sentiment)
+            await self.save_news_sentiment(sentiment_instances)
 
-                    except IntegrityError:
-                        self._logger.info(f"Exception Occurred Data Integrity Error")
-                    except Exception as e:
-                        self._logger.info(f"Exception Occurred When adding News Sentiment : {str(e)}")
-                self._logger.info(f"Thumbnail instances : {thumbnail_instances}")
-                for thumbnail_list in thumbnail_instances:
-                    if thumbnail_list:
-                        for thumbnail in thumbnail_list:
-                            try:
-                                if thumbnail is not None:
-                                    session.add(thumbnail)
+            await self.save_thumbnails(thumbnail_instances)
 
-                            except IntegrityError:
-                                self._logger.info(f"Exception Occurred Data Integrity Error")
+            await self.save_thumbnail_instances(related_tickers_instances)
 
-                            except Exception:
-                                self._logger.info(f"Exception Occurred when Adding Thumbnails")
-
-                for tickers_list in related_tickers_instances:
-                    if tickers_list:
-                        for ticker in tickers_list:
-                            try:
-                                if ticker is not None:
-                                    session.add(ticker)
-
-                            except IntegrityError:
-                                self._logger.info(f"Exception Occurred Data Integrity Error")
-
-                            except Exception:
-                                self._logger.info(f"Exception Occurred when adding Tickers")
-
-                self._logger.info(f"Batch Count : {i}")
-            try:
-                session.flush()
-            except Exception as e:
-                self._logger.info(f"Exception Occurred When Flushing")
-                self._logger.info(str(e))
+            self._logger.info(f"Batch Count : {i}")
 
             self._logger.info(f"Overall Articles Saved : {total_saved}")
+
+    async def save_thumbnail_instances(self, related_tickers_instances):
+        with mysql_instance.get_session() as session:
+            for tickers_list in related_tickers_instances:
+                if tickers_list:
+                    for ticker in tickers_list:
+                        try:
+                            if ticker is not None:
+                                session.add(ticker)
+                        except IntegrityError:
+                            self._logger.info(f"Exception Occurred Data Integrity Error")
+                        except Exception:
+                            self._logger.info(f"Exception Occurred when adding Tickers")
+
+    async def save_thumbnails(self, thumbnail_instances):
+        with mysql_instance.get_session() as session:
+            for thumbnail_list in thumbnail_instances:
+                if thumbnail_list:
+                    for thumbnail in thumbnail_list:
+                        try:
+                            if thumbnail is not None:
+                                session.add(thumbnail)
+                        except IntegrityError:
+                            self._logger.info(f"Exception Occurred Data Integrity Error")
+                        except Exception:
+                            self._logger.info(f"Exception Occurred when Adding Thumbnails")
+
+    async def save_news_sentiment(self, sentiment_instances):
+        with mysql_instance.get_session() as session:
+            for news_sentiment in sentiment_instances:
+                try:
+                    if news_sentiment is not None:
+                        session.add(news_sentiment)
+                except IntegrityError:
+                    self._logger.info(f"Exception Occurred Data Integrity Error")
+                except Exception as e:
+                    self._logger.info(f"Exception Occurred When adding News Sentiment : {str(e)}")
+
+    async def save_news_instances(self, news_instances):
+        with mysql_instance.get_session() as session:
+            for instance in news_instances:
+                try:
+                    if news_instances is not None:
+                        session.add(instance)
+                except (IntegrityError, pymysql.err.IntegrityError):
+                    self._logger.info(f"Exception Occurred Data Integrity Error")
+                except Exception as e:
+                    self._logger.info(f"Exception Occurred When adding News Article : {str(e)}")
 
     async def create_news_instance(self, article: NewsArticle) -> News | None:
         """
@@ -220,8 +224,8 @@ class DataConnector:
                             link=article.link, providerPublishTime=article.providerPublishTime,
                             _type=article.type)
             return None
-        except Exception:
-            self._logger.info(f"Unable to create instance News Article")
+        except Exception as e:
+            self._logger.info(f"Unable to create instance News Article {str(e)}")
             return None
 
     async def create_news_sentiment(self, article: NewsArticle) -> NewsSentiment | None:

@@ -214,7 +214,7 @@ class RelatedTickers(Base, _News):
         self.id = create_id()
         self.uuid = uuid
         self.ticker = ticker
-        self.stock_id = stock_id
+        self.stock_id = create_id()
 
     def to_dict(self) -> dict:
         """
