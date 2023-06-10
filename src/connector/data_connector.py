@@ -141,6 +141,7 @@ class DataConnector:
 
         for i in range(0, len(self.mem_buffer), batch_size):
             batch_articles: list[NewsArticle] = self.mem_buffer[i:i + batch_size]
+
             news_instances = await asyncio.gather(*[self.create_news_instance(article)
                                                     for article in batch_articles])
             sentiment_instances = await asyncio.gather(*[self.create_news_sentiment(article)
@@ -199,6 +200,7 @@ class DataConnector:
                     self._logger.info(f"Exception Occurred Data Integrity Error")
                 except Exception as e:
                     self._logger.info(f"Exception Occurred When adding News Sentiment : {str(e)}")
+            session.flush()
 
     async def save_news_instances(self, news_instances):
         with mysql_instance.get_session() as session:
