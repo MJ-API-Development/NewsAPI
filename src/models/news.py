@@ -33,7 +33,7 @@ class NewsArticle(BaseModel):
     @validator('relatedTickers', pre=True)
     def validate_tickers(cls, value) -> list[str]:
         if isinstance(value, str):
-            return value.split(',')
+            return [ticker.strip().upper() for ticker in value.split(",")]
         return value
 
     @validator('thumbnail', pre=True)
