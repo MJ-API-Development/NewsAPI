@@ -143,13 +143,13 @@ class DataConnector:
             batch_articles: list[NewsArticle] = self.mem_buffer[i:i + batch_size]
 
             news_instances = await asyncio.gather(*[self.create_news_instance(article)
-                                                    for article in batch_articles])
+                                                    for article in batch_articles if article is not None])
             sentiment_instances = await asyncio.gather(*[self.create_news_sentiment(article)
-                                                         for article in batch_articles])
+                                                         for article in batch_articles if article is not None])
             thumbnail_instances = await asyncio.gather(*[self.create_thumbnails_instance(article)
-                                                         for article in batch_articles])
+                                                         for article in batch_articles if article is not None])
             related_tickers_instances = await asyncio.gather(*[self.create_related_tickers(article)
-                                                               for article in batch_articles])
+                                                               for article in batch_articles if article is not None])
             total_saved += batch_size
 
             await self.save_news_instances(news_instances)
@@ -158,16 +158,22 @@ class DataConnector:
 
             await self.save_thumbnails(thumbnail_instances)
 
-            await self.save_thumbnail_instances(related_tickers_instances)
+            await self.save_related_tickers(related_tickers_instances)
 
             self._logger.info(f"Batch Count : {i}")
 
             self._logger.info(f"Overall Articles Saved : {total_saved}")
 
-    async def save_thumbnail_instances(self, related_tickers_instances):
+    async def save_related_tickers(self, related_tickers_instances):
+        """
+            **save_thumbnail_instances**
+                will save thumbnails to database
+        :param related_tickers_instances:
+        :return: None
+        """
         with mysql_instance.get_session() as session:
             for tickers_list in related_tickers_instances:
-                if tickers_list:
+                if tickers_list is not None:
                     for ticker in tickers_list:
                         try:
                             if ticker is not None:
@@ -176,11 +182,18 @@ class DataConnector:
                             self._logger.info(f"Exception Occurred Data Integrity Error")
                         except Exception:
                             self._logger.info(f"Exception Occurred when adding Tickers")
+            session.flush()
 
     async def save_thumbnails(self, thumbnail_instances):
+        """
+            **save_thumbnails**
+
+        :param thumbnail_instances:
+        :return:
+        """
         with mysql_instance.get_session() as session:
             for thumbnail_list in thumbnail_instances:
-                if thumbnail_list:
+                if thumbnail_list is not None:
                     for thumbnail in thumbnail_list:
                         try:
                             if thumbnail is not None:
@@ -189,8 +202,15 @@ class DataConnector:
                             self._logger.info(f"Exception Occurred Data Integrity Error")
                         except Exception:
                             self._logger.info(f"Exception Occurred when Adding Thumbnails")
+            session.flush()
 
     async def save_news_sentiment(self, sentiment_instances):
+        """
+            **save_news_sentiment**
+
+        :param sentiment_instances:
+        :return:
+        """
         with mysql_instance.get_session() as session:
             for news_sentiment in sentiment_instances:
                 try:
@@ -203,6 +223,12 @@ class DataConnector:
             session.flush()
 
     async def save_news_instances(self, news_instances):
+        """
+            **save_news_instances**
+
+        :param news_instances:
+        :return:
+        """
         with mysql_instance.get_session() as session:
             for instance in news_instances:
                 try:
@@ -212,6 +238,7 @@ class DataConnector:
                     self._logger.info(f"Exception Occurred Data Integrity Error")
                 except Exception as e:
                     self._logger.info(f"Exception Occurred When adding News Article : {str(e)}")
+            session.flush()
 
     async def create_news_instance(self, article: NewsArticle) -> News | None:
         """

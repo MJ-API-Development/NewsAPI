@@ -37,8 +37,9 @@ class NewsArticle(BaseModel):
     def validate_thumbnail(cls, value):
         if isinstance(value, list):
             for thumb in value:
-                Thumbnail(**thumb)
-            return [Thumbnail(**thumb) for thumb in value if not isinstance(thumb, Thumbnail)]
+                if not isinstance(thumb, dict):
+                    raise ValueError("Thumbnail must be a dictionary")
+            return [Thumbnail(**thumb) for thumb in value]
         return value
 
     @property
