@@ -63,7 +63,7 @@ async def scheduled_task() -> None:
 
             # Select and Run task
             try:
-                articles: list[NewsArticle] = await scrape_news_yahoo(tickers_list)
+                articles: list[NewsArticle] = await scrape_news_yahoo(tickers_list[5:6])
                 main_logger.info(f'RETURNING: {len(articles)} Articles to storage')
             except Exception as e:
                 main_logger.info(str(e))

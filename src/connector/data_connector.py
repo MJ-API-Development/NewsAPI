@@ -177,8 +177,11 @@ class DataConnector:
                 if tickers_list is not None:
                     for ticker in tickers_list:
                         try:
-                            if ticker is not None:
+                            if isinstance(ticker, RelatedTickers):
                                 session.add(ticker)
+                            else:
+                                self._logger.info(f"Related Ticker not correct type")
+
                         except IntegrityError:
                             self._logger.info(f"Exception Occurred Data Integrity Error")
                         except Exception:
@@ -197,8 +200,11 @@ class DataConnector:
                 if thumbnail_list is not None:
                     for thumbnail in thumbnail_list:
                         try:
-                            if thumbnail is not None:
+                            if isinstance(thumbnail, Thumbnails):
                                 session.add(thumbnail)
+                            else:
+                                self._logger.info(f"Thumbnail not correct type : {str(thumbnail)}")
+
                         except IntegrityError:
                             self._logger.info(f"Exception Occurred Data Integrity Error")
                         except Exception:
@@ -215,8 +221,10 @@ class DataConnector:
         with mysql_instance.get_session() as session:
             for news_sentiment in sentiment_instances:
                 try:
-                    if news_sentiment is not None:
+                    if isinstance(news_sentiment, NewsSentiment):
                         session.add(news_sentiment)
+                    else:
+                        self._logger.info(f"news Sentiment not correct type : {str(news_sentiment)}")
                 except IntegrityError:
                     self._logger.info(f"Exception Occurred Data Integrity Error")
                 except Exception as e:
@@ -233,9 +241,10 @@ class DataConnector:
         with mysql_instance.get_session() as session:
             for article in news_instances:
                 try:
-                    if article is not None:
+                    if isinstance(article, News):
                         session.add(article)
-
+                    else:
+                        self._logger.info(f" News not correct Type: {str(article)}")
                 except (IntegrityError, pymysql.err.IntegrityError):
                     self._logger.info(f"Exception Occurred Data Integrity Error")
                 except Exception as e:
