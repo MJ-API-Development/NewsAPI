@@ -6,7 +6,6 @@ import aiohttp
 import pymysql
 from sqlalchemy.exc import IntegrityError
 
-from news import Thumbnail
 from src.config import config_instance
 from src.connector.data_instance import mysql_instance
 from src.models import NewsArticle
