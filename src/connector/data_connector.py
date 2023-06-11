@@ -6,6 +6,7 @@ import aiohttp
 import pymysql
 from sqlalchemy.exc import IntegrityError
 
+from news import Thumbnail
 from src.config import config_instance
 from src.connector.data_instance import mysql_instance
 from src.models import NewsArticle
@@ -164,7 +165,7 @@ class DataConnector:
 
             self._logger.info(f"Overall Articles Saved : {total_saved}")
 
-    async def save_related_tickers(self, related_tickers_instances):
+    async def save_related_tickers(self, related_tickers_instances: list[list[RelatedTickers]]):
         """
             **save_thumbnail_instances**
                 will save thumbnails to database
@@ -184,7 +185,7 @@ class DataConnector:
                             self._logger.info(f"Exception Occurred when adding Tickers")
             session.flush()
 
-    async def save_thumbnails(self, thumbnail_instances):
+    async def save_thumbnails(self, thumbnail_instances: list[list[Thumbnails]]):
         """
             **save_thumbnails**
 
@@ -204,7 +205,7 @@ class DataConnector:
                             self._logger.info(f"Exception Occurred when Adding Thumbnails")
             session.flush()
 
-    async def save_news_sentiment(self, sentiment_instances):
+    async def save_news_sentiment(self, sentiment_instances: list[NewsSentiment]):
         """
             **save_news_sentiment**
 
@@ -222,7 +223,7 @@ class DataConnector:
                     self._logger.info(f"Exception Occurred When adding News Sentiment : {str(e)}")
             session.flush()
 
-    async def save_news_instances(self, news_instances):
+    async def save_news_instances(self, news_instances: list[News]):
         """
             **save_news_instances**
 
@@ -230,10 +231,11 @@ class DataConnector:
         :return:
         """
         with mysql_instance.get_session() as session:
-            for instance in news_instances:
+            for article in news_instances:
                 try:
-                    if news_instances is not None:
-                        session.add(instance)
+                    if article is not None:
+                        session.add(article)
+
                 except (IntegrityError, pymysql.err.IntegrityError):
                     self._logger.info(f"Exception Occurred Data Integrity Error")
                 except Exception as e:
@@ -282,7 +284,7 @@ class DataConnector:
         :return:
         """
         try:
-            if article.thumbnail:
+            if isinstance(article.thumbnail, list):
                 thumb_nails = [Thumbnails(thumbnail_id=create_id(), uuid=article.uuid, url=thumb.url,
                                           width=thumb.width, height=thumb.height, tag=thumb.tag)
                                for thumb in article.thumbnail]
@@ -300,8 +302,9 @@ class DataConnector:
         :return:
         """
         try:
-            if article.relatedTickers:
+            if isinstance(article.relatedTickers, list):
                 return [RelatedTickers(uuid=article.uuid, ticker=ticker) for ticker in article.relatedTickers]
+
             return None
         except Exception as e:
             self._logger.info(f"Unable to create Related Tickers Model : {str(e)}")

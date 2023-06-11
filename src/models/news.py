@@ -27,6 +27,9 @@ class NewsArticle(BaseModel):
     summary: str | None
     body: str | None
 
+    def __bool__(self):
+        return self.uuid is not None
+
     @validator('relatedTickers', pre=True)
     def validate_tickers(cls, value) -> list[str]:
         if isinstance(value, str):
