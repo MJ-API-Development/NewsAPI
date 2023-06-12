@@ -68,7 +68,7 @@ class DataConnector:
             return
 
         for article in article_list:
-            if article and article.uuid not in self._articles_present:
+            if article and (article.uuid not in self._articles_present):
                 self.mem_buffer.append(article)
                 self._articles_present.add(article.uuid)
 
@@ -286,8 +286,6 @@ class DataConnector:
     async def create_thumbnails_instance(self, article: NewsArticle) -> list[Thumbnails] | None:
         """
         **create_thumbnails_instance**
-
-
         :param article:
         :return:
         """

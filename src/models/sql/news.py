@@ -165,8 +165,8 @@ class Thumbnails(Base, _News):
     height: int = Column(Integer)
     tag: str = Column(String(255), index=True)
 
-    def __init__(self, thumbnail_id: str, uuid: str, url: str, width: int, height: int, tag: str):
-        self.thumbnail_id = thumbnail_id
+    def __init__(self, uuid: str, url: str, width: int, height: int, tag: str,  thumbnail_id: str = None):
+        self.thumbnail_id = thumbnail_id if thumbnail_id else create_id()
         self.uuid = uuid
         self.url = url
         self.width = width
@@ -214,7 +214,7 @@ class RelatedTickers(Base, _News):
         self.id = create_id()
         self.uuid = uuid
         self.ticker = ticker
-        self.stock_id = create_id()
+        self.stock_id = create_id() if stock_id is None else stock_id
 
     def to_dict(self) -> dict:
         """
