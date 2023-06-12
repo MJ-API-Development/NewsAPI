@@ -45,6 +45,18 @@ class NewsArticle(BaseModel):
             return [Thumbnail(**thumb) for thumb in value]
         return value
 
+    @validator('summary', pre=True)
+    def validate_summary(cls, value):
+        if value == "":
+            return None
+        return value
+
+    @validator('body', pre=True)
+    def validate_body(cls, value):
+        if value == "":
+            return None
+        return value
+
     @property
     def publish_time(self) -> datetime:
         """
