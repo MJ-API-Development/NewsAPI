@@ -18,6 +18,7 @@ main_logger = init_logger('Main Logger')
 SLEEP_HOURS = 60 * 60 * 2
 ONE_MINUTE = 60
 settings = config_instance().APP_SETTINGS
+
 app = FastAPI(
     title=settings.TITLE,
     description=settings.DESCRIPTION,
@@ -73,7 +74,7 @@ async def scheduled_task() -> None:
                 # prepare articles and store them into a buffer for sending to backend
                 await data_sink.incoming_articles(article_list=articles)
                 # send article to storage via database connection
-                await data_sink.mem_store_to_storage()
+                await data_sink.send_to_database()
 
             # Mark task as completed by setting task_ran to True and then store back into scheduler
             task_details.task_ran = True
