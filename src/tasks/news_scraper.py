@@ -79,9 +79,10 @@ async def ticker_articles(ticker: str) -> list[NewsArticle | RssArticle]:
             try:
                 title, summary, body = await parse_article(article=_article)
                 # Note: funny way of catching parser errors but hey - beggars cant be choosers
-                if summary and ("not supported on your current browser version" not in summary.casefold()):
+                _substring = "not supported on your current browser version"
+                if summary and (_substring not in summary.casefold()):
                     _article.summary = summary
-                if body and ("not supported on your current browser version" not in body.casefold()):
+                if body and (_substring not in body.casefold()):
                     _article.body = body
 
                 articles.append(_article)
@@ -157,6 +158,7 @@ async def parse_article(article: NewsArticle | None) -> tuple[str | None, str | 
 
         # Check if there is a "Read More" button
         read_more_button = soup.find('div', attrs={'class': 'caas-readmore'})
+
         if read_more_button is not None:
             try:
                 read_more_url = read_more_button.find('a')['href']
@@ -188,7 +190,7 @@ async def parse_article(article: NewsArticle | None) -> tuple[str | None, str | 
 
             except Exception as e:
                 news_scrapper_logger.error(f'Error parsing Article : {str(e)}')
-                return title, summary, None
+                pass
 
         return title, summary, body
 
