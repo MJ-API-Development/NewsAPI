@@ -178,6 +178,7 @@ class DataConnector:
                         try:
                             if isinstance(ticker, RelatedTickers):
                                 session.add(ticker)
+                                session.commit()
                             else:
                                 self._logger.info(f"Related Ticker not correct type")
 
@@ -201,6 +202,7 @@ class DataConnector:
                         try:
                             if isinstance(thumbnail, Thumbnails):
                                 session.add(thumbnail)
+                                session.commit()
                             else:
                                 self._logger.info(f"Thumbnail not correct type : {str(thumbnail)}")
 
@@ -222,6 +224,7 @@ class DataConnector:
                 try:
                     if isinstance(news_sentiment, NewsSentiment):
                         session.add(news_sentiment)
+                        session.commit()
                     else:
                         self._logger.info(f"news Sentiment not correct type : {str(news_sentiment)}")
                 except IntegrityError:
@@ -242,6 +245,7 @@ class DataConnector:
                 try:
                     if isinstance(article, News):
                         session.add(article)
+                        session.commit()
                     else:
                         self._logger.info(f" News not correct Type: {str(article)}")
                 except (IntegrityError, pymysql.err.IntegrityError):

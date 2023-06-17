@@ -1,6 +1,4 @@
 
-
-
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker, Session, declarative_base
@@ -13,7 +11,8 @@ sessionType = Session
 
 
 class MYSQLDatabase:
-    """Base class for database connection."""
+    """Base class for database connection.
+    """
 
     def __init__(self, database_url: str | None = None):
         self.settings = config_instance().DATABASE_SETTINGS
