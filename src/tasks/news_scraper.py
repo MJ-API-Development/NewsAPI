@@ -1,7 +1,7 @@
 import asyncio
 import itertools
 import json
-
+import uuid
 from bs4 import BeautifulSoup
 from pydantic import ValidationError
 
@@ -64,6 +64,7 @@ async def ticker_articles(ticker: str) -> list[NewsArticle | RssArticle]:
         article.update({'thumbnail': get_thumbnail_resolutions(article=article)})
         # noinspection PyBroadException
         # news_scrapper_logger.info(f"Thumbnails : {article['thumbnail']}")
+        article['uuid'] = uuid.uuid4()
         try:
             # NOTE: sometimes there is a strange list error here, don't know why honestly
 
