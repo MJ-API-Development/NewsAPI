@@ -15,7 +15,7 @@ from src.utils.my_logger import init_logger
 
 main_logger = init_logger('Main Logger')
 # Extended Sleep Hours to 2 to prevent over using proxy server request allocations
-SLEEP_HOURS = 60 * 60 * 2
+SLEEP_HOURS = 60 * 60 * 3
 ONE_MINUTE = 60
 settings = config_instance().APP_SETTINGS
 
