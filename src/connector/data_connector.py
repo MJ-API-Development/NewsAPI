@@ -171,22 +171,21 @@ class DataConnector:
         :param related_tickers_instances:
         :return: None
         """
-        with mysql_instance.get_session() as session:
-            for tickers_list in related_tickers_instances:
-                if tickers_list is not None:
-                    for ticker in tickers_list:
-                        try:
-                            if isinstance(ticker, RelatedTickers):
-                                session.add(ticker)
-                                session.commit()
-                            else:
-                                self._logger.info(f"Related Ticker not correct type")
+        try:
+            with mysql_instance.get_session() as session:
+                for tickers_list in related_tickers_instances:
+                    if tickers_list is not None:
+                        for ticker in tickers_list:
+                                if isinstance(ticker, RelatedTickers):
+                                    session.add(ticker)
+                                    session.commit()
+                                else:
+                                    self._logger.info(f"Related Ticker not correct type")
 
-                        except IntegrityError:
-                            self._logger.info(f"Exception Occurred Data Integrity Error")
-                        except Exception:
-                            self._logger.info(f"Exception Occurred when adding Tickers")
-            session.flush()
+        except IntegrityError:
+            self._logger.info(f"Exception Occurred Data Integrity Error")
+        except Exception:
+            self._logger.info(f"Exception Occurred when adding Tickers")
 
     async def save_thumbnails(self, thumbnail_instances: list[list[Thumbnails]]):
         """
@@ -195,22 +194,22 @@ class DataConnector:
         :param thumbnail_instances:
         :return:
         """
-        with mysql_instance.get_session() as session:
-            for thumbnail_list in thumbnail_instances:
-                if thumbnail_list is not None:
-                    for thumbnail in thumbnail_list:
-                        try:
-                            if isinstance(thumbnail, Thumbnails):
-                                session.add(thumbnail)
-                                session.commit()
-                            else:
-                                self._logger.info(f"Thumbnail not correct type : {str(thumbnail)}")
+        try:
 
-                        except IntegrityError:
-                            self._logger.info(f"Exception Occurred Data Integrity Error")
-                        except Exception:
-                            self._logger.info(f"Exception Occurred when Adding Thumbnails")
-            session.flush()
+            with mysql_instance.get_session() as session:
+                for thumbnail_list in thumbnail_instances:
+                    if thumbnail_list is not None:
+                        for thumbnail in thumbnail_list:
+                                if isinstance(thumbnail, Thumbnails):
+                                    session.add(thumbnail)
+                                    session.commit()
+                                else:
+                                    self._logger.info(f"Thumbnail not correct type : {str(thumbnail)}")
+
+        except IntegrityError:
+            self._logger.info(f"Exception Occurred Data Integrity Error")
+        except Exception:
+            self._logger.info(f"Exception Occurred when Adding Thumbnails")
 
     async def save_news_sentiment(self, sentiment_instances: list[NewsSentiment]):
         """
@@ -219,19 +218,19 @@ class DataConnector:
         :param sentiment_instances:
         :return:
         """
-        with mysql_instance.get_session() as session:
-            for news_sentiment in sentiment_instances:
-                try:
-                    if isinstance(news_sentiment, NewsSentiment):
-                        session.add(news_sentiment)
-                        session.commit()
-                    else:
-                        self._logger.info(f"news Sentiment not correct type : {str(news_sentiment)}")
-                except IntegrityError:
-                    self._logger.info(f"Exception Occurred Data Integrity Error")
-                except Exception as e:
-                    self._logger.info(f"Exception Occurred When adding News Sentiment : {str(e)}")
-            session.flush()
+        try:
+
+            with mysql_instance.get_session() as session:
+                for news_sentiment in sentiment_instances:
+                        if isinstance(news_sentiment, NewsSentiment):
+                            session.add(news_sentiment)
+                            session.commit()
+                        else:
+                            self._logger.info(f"news Sentiment not correct type : {str(news_sentiment)}")
+        except IntegrityError:
+            self._logger.info(f"Exception Occurred Data Integrity Error")
+        except Exception as e:
+            self._logger.info(f"Exception Occurred When adding News Sentiment : {str(e)}")
 
     async def save_news_instances(self, news_instances: list[News]):
         """
@@ -240,19 +239,19 @@ class DataConnector:
         :param news_instances:
         :return:
         """
-        with mysql_instance.get_session() as session:
-            for article in news_instances:
-                try:
-                    if isinstance(article, News):
-                        session.add(article)
-                        session.commit()
-                    else:
-                        self._logger.info(f" News not correct Type: {str(article)}")
-                except (IntegrityError, pymysql.err.IntegrityError):
-                    self._logger.info(f"Exception Occurred Data Integrity Error")
-                except Exception as e:
-                    self._logger.info(f"Exception Occurred When adding News Article : {str(e)}")
-            session.flush()
+        try:
+            with mysql_instance.get_session() as session:
+                for article in news_instances:
+
+                        if isinstance(article, News):
+                            session.add(article)
+                            session.commit()
+                        else:
+                            self._logger.info(f" News not correct Type: {str(article)}")
+        except (IntegrityError, pymysql.err.IntegrityError):
+            self._logger.info(f"Exception Occurred Data Integrity Error")
+        except Exception as e:
+            self._logger.info(f"Exception Occurred When adding News Article : {str(e)}")
 
     async def create_news_instance(self, article: NewsArticle) -> News | None:
         """
