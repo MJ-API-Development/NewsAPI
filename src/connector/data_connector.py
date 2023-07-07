@@ -272,6 +272,7 @@ class DataConnector:
 
     async def create_news_sentiment(self, article: NewsArticle) -> NewsSentiment | None:
         """
+        **create_news_sentiment**
 
         :param article:
         :return:
@@ -307,6 +308,7 @@ class DataConnector:
 
     async def create_related_tickers(self, article: NewsArticle) -> list[RelatedTickers] | None:
         """
+        **create_related_tickers**
         :param article:
         :return:
         """
